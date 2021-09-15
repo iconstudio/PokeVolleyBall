@@ -125,14 +125,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 				case IDM_ABOUT:
 					DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
 					break;
-				case IDM_EXIT:
-					DestroyWindow(hWnd);
-					break;
+
 				default:
 					return DefWindowProc(hWnd, message, wParam, lParam);
 			}
 		}
 		break;
+
 		case WM_PAINT:
 		{
 			PAINTSTRUCT ps;
@@ -141,9 +140,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
 			EndPaint(hWnd, &ps);
 		}
 		break;
+
 		case WM_DESTROY:
 			PostQuitMessage(0);
 			break;
+
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
 	}

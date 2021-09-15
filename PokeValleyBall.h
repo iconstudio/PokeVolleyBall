@@ -3,22 +3,23 @@
 #include "resource.h"
 
 
-class GameSprite;
+// 추상 게임 컴포넌트
+class GameBehavior {
+public:
+	using pointer = GameBehavior*;
 
-class GameBehavior;
-class GameScene;
-class sceneTitle;
-class sceneMainMenu;
-class sceneGameReady;
-class sceneGame;
-class sceneGamePaused;
-class sceneGameComplete;
-class sceneScoring;
-class sceneSetting;
+	static pointer create() = delete;
 
-class GameInstance;
-class oGraviton;
-class oValleyBall;
-class oPokemon;
-class oPlayerPoke;
-class oEnemyPoke;
+	GameBehavior();
+	virtual ~GameBehavior();
+
+	virtual void on_create() = 0;
+	virtual void on_destroy() = 0;
+	virtual void on_update(double) = 0;
+	virtual void on_update_later(double) = 0;
+	virtual void on_render(HDC) = 0;
+
+	int data;
+	bool done;
+};
+
