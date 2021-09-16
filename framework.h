@@ -1,84 +1,65 @@
-ï»¿#pragma once
-
-#include "targetver.h"
-
-/// C ëŸ°íƒ€ì„ í—¤ë” íŒŒì¼ì…ë‹ˆë‹¤.
-//#define _CRT_SECURE_NO_WARNINGS
-
-#pragma comment(lib, "msimg32.lib")
-#pragma comment(lib, "Ws2_32.lib")
-
-#include <malloc.h>
-#include <memory.h>
-#include <tchar.h>
-#include <time.h>
-#include <cstdlib>
+#pragma once
+#include "resource.h"
 
 
-/// Windows í—¤ë” íŒŒì¼:
-#define WIN32_LEAN_AND_MEAN // ê±°ì˜ ì‚¬ìš©ë˜ì§€ ì•ŠëŠ” ë‚´ìš©ì€ Windows í—¤ë”ì—ì„œ ì œì™¸í•©ë‹ˆë‹¤.
-#include <windows.h>
-#include <winperf.h>
+class GameInput {
+public:
+	bool pressing = false;
+};
 
 
-/// ATL / MFC í—¤ë” íŒŒì¼:
-#define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS // ì¼ë¶€ CString ìƒì„±ìëŠ” ëª…ì‹œì ìœ¼ë¡œ ì„ ì–¸ë©ë‹ˆë‹¤.
-#include <atlbase.h>
-#include <atlimage.h>
-#include <atlstr.h>
+// °ÔÀÓ ±¸µ¿ºÎ
+class GameFramework {
+public:
+	GameFramework();
+	~GameFramework();
 
+	UINT mouse_x, mouse_y; // ¸¶¿ì½º ÁÂÇ¥
 
-// ìˆ˜í•™ ìƒìˆ˜ ì„ ì–¸
-#define _USE_MATH_DEFINES
-#include <math.h>
+	void input_register(int);
+	bool input_check(int);
+	//bool input_check_pressed(int button);
+	//bool input_check_released(int button);
 
+	void init();
+	void build(); // Àå¸éÀ» ºÒ·¯¿É´Ï´Ù.
+	bool update();
+	void quit();
 
-// í‘œì¤€ ë¼ì´ë¸ŒëŸ¬ë¦¬
-#include <memory>
-#include <vector>
-#include <list>
-#include <stack>
-#include <set>
-#include <map>
-#include <queue>
-#include <algorithm>
-#include <string>
-#include <fstream>
-#include <iostream>
+	void on_create();
+	void on_destroy();
+	void on_update(double);
+	void on_update_later(double);
+	void on_render(HWND);
 
-using std::vector;
-using std::list;
-using std::stack;
-using std::set;
-using std::map;
-using std::priority_queue;
-using std::deque;
-using std::string;
-using std::shared_ptr;
-using std::unique_ptr;
-using std::weak_ptr;
-using std::make_shared;
-using std::make_unique;
-using std::cout;
-using std::endl;
+	template<class GScene = GameScene>
+	GameScene* state_push() {
+		var room = new GScene();
+		states.push_back(room);
 
+		return (GameScene*)room;
+	}
 
-class GameSprite;
+	bool state_is_done() const;
+	void state_clear();
+	bool state_remains();
+	void state_jump(const INT);
+	void state_jump_next();
 
-class GameBehavior;
-class GameScene;
-class sceneTitle;
-class sceneMainMenu;
-class sceneGameReady;
-class sceneGame;
-class sceneGamePaused;
-class sceneGameComplete;
-class sceneScoring;
-class sceneSetting;
+	friend LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+private:
+	double delta_time; // ½ÇÁ¦ ½Ã°£
+	//GameChrono game_clock; // °ÔÀÓ ½Ã°£ Àç±â °´Ã¼ÀÔ´Ï´Ù.
 
-class GameInstance;
-class oGraviton;
-class oValleyBall;
-class oPokemon;
-class oPlayerPoke;
-class oEnemyPoke;
+	// °ÔÀÓ Àå¸é ¸ğÀ½
+	deque<GameScene*> states;
+	GameScene* state_id;
+	INT state_handle = 0;
+
+	PAINTSTRUCT painter; // ·»´õ¸µ Á¤º¸
+
+	map<WPARAM, shared_ptr<GameInput>> key_checkers;
+};
+
+// ¸¶¿ì½º ¹öÆ°
+const WPARAM VB_LEFT = 0, VB_MIDDLE = 1, VB_RIGHT = 2;

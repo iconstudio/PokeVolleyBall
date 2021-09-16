@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="framework.h">
+    <ClInclude Include="stdafx.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="targetver.h">
@@ -24,7 +24,7 @@
     <ClInclude Include="Resource.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="PokeValleyBall.h">
+    <ClInclude Include="PokeVolleyBall.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="pch.h">
@@ -33,12 +33,36 @@
     <ClInclude Include="Core.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="Client.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Phaser.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Framework.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Sprite.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="PokeValleyBall.cpp">
+    <ClCompile Include="PokeVolleyBall.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="pch.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Client.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Phaser.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Framework.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Sprite.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -52,6 +76,18 @@
       <Filter>리소스 파일</Filter>
     </Image>
     <Image Include="PokeValleyBall.ico">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\4198.png">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="..\..\..\OneDrive - 한국산업기술대학교\Programming\References\warpe.png">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\logo.png">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="logo.png">
       <Filter>리소스 파일</Filter>
     </Image>
   </ItemGroup>
