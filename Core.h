@@ -1,6 +1,7 @@
 #pragma once
 #include "resource.h"
 #include "pch.h"
+#include "Sprite.h"
 
 
 // 추상 게임 컴포넌트
@@ -84,7 +85,8 @@ public:
 	using parent = GameBehavior;
 
 	GameInstance(GameScene* nclan, double nx = 0.0, double ny = 0.0, double nz = 0.0)
-		: parent(), room(nclan), sprite_index(-1), x(nx), y(ny), z(nz), image_index(0.0), image_speed(0.0) {}
+		: parent(), room(nclan), sprite_index(-1)
+		, x(nx), y(ny), z(nz), image_number(0), image_index(0.0), image_speed(0.0) {}
 
 	GameInstance(type&) = default;
 
@@ -93,10 +95,22 @@ public:
 	virtual void on_create() = 0;
 	virtual void on_destroy() = 0;
 	virtual void on_update(double frame_advance) = 0;
-	virtual void on_update_later(double frame_advance) = 0;
+
+	virtual void on_update_later(double frame_advance) override { // animation
+		if (-1 != sprite_index) {
+			double animation_speed;
+			if (1 < image_number && 0.0 != (animation_speed = image_speed * frame_advance)) {
+				image_index += animation_speed;
+
+				while (animation_speed < 0) animation_speed += image_number;
+				while (image_number <= animation_speed) animation_speed -= image_number;
+			}
+		}
+	}
+
 	virtual void on_render(HDC canvas) = 0;
 
-	UINT sprite_index;
+	UINT sprite_index, image_number;
 	double x, y, z, image_index, image_speed;
 
 private:
