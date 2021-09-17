@@ -7,6 +7,7 @@
 
 
 #define MAX_LOADSTRING 100
+#define RENDER_TIMER_ID 0
 
 
 // 전역 변수:
@@ -14,6 +15,28 @@ WCHAR szTitle[MAX_LOADSTRING];								// 제목 표시줄 텍스트입니다.
 WCHAR szWindowClass[MAX_LOADSTRING];						// 기본 창 클래스 이름입니다.
 WindowsClient game_client{ RESOLUTION_W, RESOLUTION_H };	// 클라이언트 객체입니다.
 GameFramework game_framework;
+
+
+template<class GInstance>
+auto instance_nearest(double x, double y) {
+
+}
+
+template<class GInstance1, class GInstance2>
+auto instance_place(GInstance1 whoami, double x, double y) {
+
+}
+
+template<class GInstance>
+auto instance_position(double x, double y) {
+	if (game_framework.state_id)
+		return new GInstance(game_framework.state_id, x, y);
+	else
+		return nullptr;
+}
+
+template<>
+auto instance_position<ALL>(double x, double y) {}
 
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -40,56 +63,67 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	MSG msg{};
 
 
-	// 게임 진행:
+	// 게임 초기화
 	game_framework.init();
 
+	// 사용자 코드입니다:
 	game_framework.input_register(VK_LEFT);
 	game_framework.input_register(VK_RIGHT);
 	game_framework.input_register(VK_UP);
 	game_framework.input_register(VK_DOWN);
 
-	auto room_0 = game_framework.state_push<sceneGame>();
-	game_framework.state_jump(0);
+	var room_0 = game_framework.state_push<sceneGame>();
+	var inst_0 = room_0->instance_create<oValleyBall>(0.0, 0.0);
+	var find_0 = room_0->instance_seek<oValleyBall>(0);
+	cout << find_0->done << endl;
 
-	//auto room_1 = make_scene<sceneTitle>();
-	//auto room_2 = make_scene<sceneMainMenu>();
-	//auto room_3 = make_scene<sceneSetting>();
-	//auto room_4 = make_scene<sceneGameReady>();
-	//auto room_5 = make_scene<sceneGame>();
-	//auto room_6 = make_scene<sceneGamePaused>();
-	//auto room_7 = make_scene<sceneGameComplete>();
-	//auto room_8 = make_scene<sceneScoring>();
-
+	// 게임 빌드
+	game_framework.build();
 
 	// 기본 메시지 루프입니다:
-	while (true) {
-		if (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-			if (msg.message == WM_QUIT) {
+	bool done = false;
+
+	while (true) { // 1
+		game_framework.on_create();
+
+		while (true) { // 2
+			if (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+				if (msg.message == WM_QUIT) {
+					done = true;
+					break;
+				}
+
+				if (!::TranslateAccelerator(msg.hwnd, hAccelTable, &msg)) {
+					::TranslateMessage(&msg);
+					::DispatchMessage(&msg);
+				}
+			}
+
+			auto status = game_framework.update();
+			if (!status) { // The current state is completed.
 				break;
 			}
+		} // 2
+		game_framework.on_destroy();
 
-			if (!::TranslateAccelerator(msg.hwnd, hAccelTable, &msg)) {
-				::TranslateMessage(&msg);
-				::DispatchMessage(&msg);
-			}
+		if (game_framework.state_remains()) {
+			game_framework.state_jump_next();
+		} else {
+			break;
 		}
-	}
 
+		if (done)
+			break;
+	} // 1
+
+	game_framework.quit();
 	game_framework.state_clear();
 
 	return (int)msg.wParam;
 }
 
-//
-//  함수: WndProc(HWND, UINT, WPARAM, LPARAM)
-//
-//  용도: 주 창의 메시지를 처리합니다.
-//
-//  WM_COMMAND  - 애플리케이션 메뉴를 처리합니다.
-//  WM_PAINT    - 주 창을 그립니다.
-//  WM_DESTROY  - 종료 메시지를 게시하고 반환합니다.
-//
-//
+////////////////////////////////////////////////////////////////////////////////////////////
+
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) {
 	switch (message) {
 		// 창 생성
@@ -234,6 +268,56 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 	return (INT_PTR)FALSE;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////
+
+GameBehavior::GameBehavior() : data(0), done(false) {}
+
+GameBehavior::~GameBehavior() {}
+
+GameInstance::GameInstance(GameScene* nclan, double nx, double ny)
+	: parent(), room(nclan), sprite_index(-1), box{ 0, 0, 0, 0 }
+	, x(nx), y(ny), image_number(0), image_index(0.0), image_speed(0.0) {}
+
+GameInstance::~GameInstance() {
+	signout();
+}
+
+void GameInstance::signout() {
+	if (room) {
+		room->instance_uninstall(this);
+		room = nullptr;
+	}
+}
+
+void GameInstance::signin(GameScene* enter) {
+	enter->instance_install(this);
+	room = enter;
+}
+
+void GameInstance::on_create() {}
+
+void GameInstance::on_destroy() {}
+
+void GameInstance::on_update(double frame_advance) {}
+
+void GameInstance::on_update_later(double frame_advance) {
+	if (-1 != sprite_index) {
+		double animation_speed;
+		if (1 < image_number && 0.0 != (animation_speed = image_speed * frame_advance)) {
+			image_index += animation_speed;
+
+			while (image_index < 0) image_index += image_number;
+			while (image_number <= image_index) image_index -= image_number;
+		}
+	}
+}
+
+void GameInstance::on_render(HDC canvas) {}
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////
+
 sceneIntro::sceneIntro() : parent() {}
 
 sceneIntro::~sceneIntro() {}
@@ -254,9 +338,49 @@ void sceneGame::on_update(double frame_advance) {}
 
 void sceneGame::on_update_later(double frame_advance) {}
 
-void sceneGame::on_render(HDC canvas) {
-}
+void sceneGame::on_render(HDC canvas) {}
 
 sceneMainMenu::sceneMainMenu() {}
 
 sceneMainMenu::~sceneMainMenu() {}
+
+////////////////////////////////////////////////////////////////////////////////////////////
+
+oGraviton::oGraviton(GameScene* nclan, double nx, double ny)
+	: parent(nclan, nx, ny), hspeed(0.0), vspeed(0.0), gravity(GRAVITY) {
+}
+
+void oGraviton::on_create() {}
+
+void oGraviton::on_destroy() {}
+
+void oGraviton::on_update(double frame_advance) {
+	if (frame_advance <= 0)
+		return;
+
+	var xspeed = px_per_sec(hspeed) * frame_advance;
+	if (0.0 != xspeed) {
+		GameBehavior* check_horizontal;
+		if (0.0 < xspeed)
+			check_horizontal = false; // instance_place<oSolid>(x + xspeed + 1, y);
+		else
+			check_horizontal = false; // instance_place<oSolid>(x + xspeed - 1, y);
+
+		if (check_horizontal) {
+			
+		} else {
+			x += xspeed;
+		}
+	}
+
+	if (0 != hspeed) {
+		var yspeed = px_per_sec(vspeed);
+
+		y += yspeed;
+	}
+	
+}
+
+void oGraviton::on_render(HDC canvas) {}
+
+oValleyBall::oValleyBall(GameScene* nclan, double nx, double ny) : parent(nclan, nx, ny) {}

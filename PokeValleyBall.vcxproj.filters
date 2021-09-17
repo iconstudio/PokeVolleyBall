@@ -56,9 +56,6 @@
     <ClCompile Include="Client.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="Phaser.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="Framework.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
@@ -88,6 +85,9 @@
       <Filter>리소스 파일</Filter>
     </Image>
     <Image Include="logo.png">
+      <Filter>리소스 파일</Filter>
+    </Image>
+    <Image Include="res\ball.png">
       <Filter>리소스 파일</Filter>
     </Image>
   </ItemGroup>

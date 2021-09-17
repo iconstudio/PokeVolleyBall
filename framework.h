@@ -2,6 +2,8 @@
 #include "resource.h"
 
 
+struct ALL {};
+
 class GameInput {
 public:
 	bool pressing = false;
@@ -47,19 +49,23 @@ public:
 	void state_jump_next();
 
 	friend LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+
+	GameScene* state_id;
+	INT state_handle = 0;
 private:
+	PAINTSTRUCT painter; // 렌더링 정보
 	double delta_time; // 실제 시간
 	//GameChrono game_clock; // 게임 시간 재기 객체입니다.
 
 	// 게임 장면 모음
 	deque<GameScene*> states;
-	GameScene* state_id;
-	INT state_handle = 0;
 
-	PAINTSTRUCT painter; // 렌더링 정보
+	vector<shared_ptr<GameSprite>> sprites;
 
 	map<WPARAM, shared_ptr<GameInput>> key_checkers;
 };
+
+using garage_iterator = multimap<unsigned long, GameBehavior*>::iterator;
 
 // 마우스 버튼
 const WPARAM VB_LEFT = 0, VB_MIDDLE = 1, VB_RIGHT = 2;

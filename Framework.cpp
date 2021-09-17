@@ -29,13 +29,23 @@ void GameFramework::init() {
 	input_register(VK_ESCAPE);
 }
 
-void GameFramework::build() {}
-
-bool GameFramework::update() {
-	return false;
+void GameFramework::build() {
+	state_jump(0);
 }
 
-void GameFramework::quit() {}
+bool GameFramework::update() {
+	if (state_is_done()) {
+		return false;
+	}
+	on_update(delta_time);
+	on_update_later(delta_time);
+
+	return true;
+}
+
+void GameFramework::quit() {
+	state_clear();
+}
 
 bool GameFramework::state_is_done() const {
 	if (state_id)

@@ -76,7 +76,6 @@ GameSprite::~GameSprite() {
 	raw.Destroy();
 
 	frames.clear();
-	delete &box;
 }
 
 void GameSprite::draw(HDC surface, const double dx, const double dy, const UINT index, const double angle, const double xscale, const double yscale) {
@@ -98,7 +97,7 @@ const int GameSprite::get_height() const {
 bool GameSprite::__process_image(CImage& image, const size_t width, const size_t height) {
 	if (0 < width && 0 < height) {
 		if (1 < number) { // 애니메이션을 위해서는 가로로 길쭉한 그림이 필요합니다.
-			UINT slice_w, temp_w;
+			int slice_w, temp_w;
 			if (1 == width) {
 				slice_w = 1;
 			} else {

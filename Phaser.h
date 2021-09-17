@@ -4,7 +4,7 @@
 class Phaser {
 public:
 	Phaser(const float&& duration)
-		: phase(0), ratio(0.0f), time(0.0f), my_size(1), my_durations(duration) {}
+		: phase(0), ratio(0.0f), time(0.0f), my_size(1), my_durations{ duration } {}
 
 	Phaser(const std::initializer_list<float>&& durations)
 		: phase(0), ratio(0.0f), time(0.0f), my_size(durations.size()), my_durations(durations) {}
@@ -44,6 +44,6 @@ private:
 	unsigned int phase;
 	float ratio, time;
 
-	const unsigned int my_size;
+	const size_t my_size;
 	const vector<float> my_durations;
 };

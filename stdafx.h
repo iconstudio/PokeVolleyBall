@@ -51,6 +51,7 @@ using std::vector;
 using std::list;
 using std::stack;
 using std::set;
+using std::multimap;
 using std::map;
 using std::priority_queue;
 using std::deque;
@@ -62,59 +63,3 @@ using std::make_shared;
 using std::make_unique;
 using std::cout;
 using std::endl;
-
-
-class GameInput;
-class GameFramework;
-class GameSprite;
-
-class GameBehavior;
-class GameScene;
-class sceneTitle;
-class sceneMainMenu;
-class sceneGameReady;
-class sceneGame;
-class sceneGamePaused;
-class sceneGameComplete;
-class sceneScoring;
-class sceneSetting;
-
-class GameInstance;
-class oGraviton;
-class oValleyBall;
-class oPokemon;
-class oPlayerPoke;
-class oEnemyPoke;
-
-
-namespace Render {
-	void refresh(HWND hwnd);
-
-	void transform_set(HDC, XFORM&);
-	void transform_set_identity(HDC);
-	void transform_set_rotation(HDC);
-
-	BOOL draw_rectangle(HDC, int, int, int, int);
-	void draw_end(HDC, HGDIOBJ, HGDIOBJ);
-
-	static XFORM transform_identity{ 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f };
-}
-
-
-#define sign(_x) ((_x > 0) ? 1 : ((_x == 0) ? 0 : -1))
-
-inline constexpr auto radtodeg(double value) {
-	return value / M_PI * 180;
-}
-
-inline constexpr auto degtorad(double value) {
-	return value * M_PI / 180;
-}
-
-inline double lengthdir_x(double length, double direction) {
-	return cos(degtorad(direction)) * length;
-}
-
-inline double lengthdir_y(double length, double direction) {
-	return -sin(degtorad(direction)) * length;
-}

@@ -24,6 +24,4 @@ private:
 
 	vector<unique_ptr<CImage>> frames; // 잘린 그림. 비어있을 수도 있다.
 	size_t width, height; // 프레임 크기
-
-	RECT box; // 충돌체
 };
