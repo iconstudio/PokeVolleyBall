@@ -91,6 +91,8 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard_C>Default</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -107,6 +109,8 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard_C>Default</LanguageStandard_C>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -179,12 +183,8 @@
     <ResourceCompile Include="PokeValleyBall.rc" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\..\..\OneDrive - 한국산업기술대학교\Programming\References\warpe.png" />
-    <Image Include="logo.png" />
     <Image Include="PokeValleyBall.ico" />
-    <Image Include="res\4198.png" />
     <Image Include="res\ball.png" />
-    <Image Include="res\logo.png" />
     <Image Include="small.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

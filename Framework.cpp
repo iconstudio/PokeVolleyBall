@@ -3,16 +3,15 @@
 #include "Core.h"
 
 
-GameFramework::GameFramework() : mouse_x(0), mouse_y(0), delta_time(0.0), state_id(nullptr), painter{} {}
+GameFramework::GameFramework()
+	: mouse_x(0), mouse_y(0), delta_time(0.0), state_id(nullptr), painter{}, elapsed(0) {}
 
-GameFramework::~GameFramework() {}
-
-void GameFramework::input_register(int button) {
-	key_checkers.emplace(button, make_shared<GameInput>());
+void GameFramework::input_register(int virtual_button) {
+	key_checkers.emplace(virtual_button, make_shared<GameInput>());
 }
 
-bool GameFramework::input_check(int button) {
-	var checker = key_checkers.find(button);
+bool GameFramework::input_check(int virtual_button) {
+	var checker = key_checkers.find(virtual_button);
 	if (checker != key_checkers.end()) {
 		return checker->second->pressing;
 	}
@@ -30,21 +29,53 @@ void GameFramework::init() {
 }
 
 void GameFramework::build() {
-	state_jump(0);
+	if (state_remains())
+		state_jump(0);
 }
 
 bool GameFramework::update() {
 	if (state_is_done()) {
 		return false;
 	}
+	clock_previos = std::chrono::system_clock::now();
+	delta_time = get_elapsed_second();
 	on_update(delta_time);
 	on_update_later(delta_time);
+	clock_now = std::chrono::system_clock::now();
+
+	elapsed = std::chrono::duration_cast<tick_type>(clock_now - clock_previos).count();
 
 	return true;
 }
 
 void GameFramework::quit() {
 	state_clear();
+}
+
+double GameFramework::get_elapsed_second() const {
+	return ((double)elapsed / (double)tick_type::period::den);
+}
+
+size_t GameFramework::make_sprite(HINSTANCE instance, const UINT resource, const UINT number, const int xoff, const int yoff) {
+	size_t loc = sprites.size();
+	sprites.emplace_back(make_shared<GameSprite>(instance, resource, number, xoff, yoff));
+
+	return loc;
+}
+
+size_t GameFramework::make_sprite(const LPCTSTR path, const UINT number, const int xoff, const int yoff) {
+	size_t loc = sprites.size();
+	sprites.emplace_back(make_shared<GameSprite>(path, number, xoff, yoff));
+
+	return loc;
+}
+
+shared_ptr<GameSprite>& GameFramework::find_sprite(const size_t index) {
+	if (index < sprites.size()) {
+		return sprites.at(index);
+	} else {
+		throw std::exception("스프라이트를 찾을 수 없습니다!");
+	}
 }
 
 bool GameFramework::state_is_done() const {
@@ -61,7 +92,7 @@ void GameFramework::state_clear() {
 }
 
 bool GameFramework::state_remains() {
-	return (!states.empty() && state_handle < states.size() - 1);
+	return (!states.empty() && state_id != states.back());
 }
 
 void GameFramework::state_jump(const INT index) {
@@ -92,15 +123,45 @@ void GameFramework::on_destroy() {
 	}
 }
 
-void GameFramework::on_update(double frame_advance) {
+void GameFramework::on_update(const double frame_advance) {
 	if (state_id) {
 		state_id->on_update(frame_advance);
 	}
 }
 
-void GameFramework::on_update_later(double frame_advance) {
+void GameFramework::on_update_later(const double frame_advance) {
 	if (state_id) {
 		state_id->on_update_later(frame_advance);
+	}
+}
+
+void GameFramework::on_mousedown(const WPARAM button, const LPARAM cursor) {
+	auto vk_status = key_checkers[button];
+	vk_status->pressing = true;
+
+	mouse_x = LOWORD(cursor);
+	mouse_y = HIWORD(cursor);
+}
+
+void GameFramework::on_mouseup(const WPARAM button, const LPARAM cursor) {
+	auto vk_status = key_checkers[button];
+	vk_status->pressing = false;
+
+	mouse_x = LOWORD(cursor);
+	mouse_y = HIWORD(cursor);
+}
+
+void GameFramework::on_keydown(const WPARAM key) {
+	auto vk_status = key_checkers.find(key);
+	if (vk_status != key_checkers.end()) {
+		vk_status->second->pressing = true;
+	}
+}
+
+void GameFramework::on_keyup(const WPARAM key) {
+	auto vk_status = key_checkers.find(key);
+	if (vk_status != key_checkers.end()) {
+		vk_status->second->pressing = false;
 	}
 }
 
@@ -129,8 +190,6 @@ void GameFramework::on_render(HWND hwnd) {
 	if (state_id) {
 		state_id->on_render(surface_double);
 	}
-
-	Ellipse(surface_double, 80, 200, 150, 270);
 
 	// 이중 버퍼 -> 백 버퍼
 	BitBlt(surface_back, 0, 0, RESOLUTION_W, RESOLUTION_H, surface_double, 0, 0, SRCCOPY);

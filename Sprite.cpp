@@ -2,7 +2,7 @@
 #include "Sprite.h"
 
 
-GameSprite::GameSprite(HINSTANCE instance, const UINT resource, const UINT number, const int xoff, const int yoff, COLORREF transperent)
+GameSprite::GameSprite(HINSTANCE instance, const UINT resource, const UINT number, const int xoff, const int yoff)
 	: raw(CImage()), raw_width(0), raw_height(0), width(0), height(0), number(number), xoffset(xoff), yoffset(yoff) {
 	raw.LoadFromResource(instance, resource);
 	if (raw.IsNull()) {
@@ -34,7 +34,7 @@ GameSprite::GameSprite(HINSTANCE instance, const UINT resource, const UINT numbe
 	}
 }
 
-GameSprite::GameSprite(const LPCTSTR path, const UINT number, const int xoff, const int yoff, COLORREF transperent)
+GameSprite::GameSprite(const LPCTSTR path, const UINT number, const int xoff, const int yoff)
 	: raw(CImage()), raw_width(0), raw_height(0), width(0), height(0), number(number), xoffset(xoff), yoffset(yoff) {
 	raw.Load(path);
 	if (raw.IsNull()) {
@@ -72,7 +72,6 @@ GameSprite::~GameSprite() {
 			image->Destroy();
 		}
 	}
-	raw.ReleaseDC();
 	raw.Destroy();
 
 	frames.clear();
@@ -84,6 +83,13 @@ void GameSprite::draw(HDC surface, const double dx, const double dy, const UINT 
 	} else {
 		__draw_single(surface, raw, dx, dy, angle, xscale, yscale);
 	}
+}
+
+void GameSprite::set_bbox(const LONG left, const LONG right, const LONG top, const LONG bottom) {
+	bbox.left = left;
+	bbox.right = right;
+	bbox.top = top;
+	bbox.bottom = bottom;
 }
 
 const int GameSprite::get_width() const {
@@ -135,6 +141,8 @@ bool GameSprite::__process_image(CImage& image, const size_t width, const size_t
 			this->width = raw_width;
 			this->height = raw_height;
 		}
+
+		set_bbox(-xoffset, -yoffset, this->width - xoffset, this->height - yoffset);
 	} else { // failed!
 		return false;
 	}

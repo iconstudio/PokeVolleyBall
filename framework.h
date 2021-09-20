@@ -14,12 +14,9 @@ public:
 class GameFramework {
 public:
 	GameFramework();
-	~GameFramework();
 
-	UINT mouse_x, mouse_y; // 마우스 좌표
-
-	void input_register(int);
-	bool input_check(int);
+	void input_register(int virtual_button);
+	bool input_check(int virtual_button);
 	//bool input_check_pressed(int button);
 	//bool input_check_released(int button);
 
@@ -27,19 +24,28 @@ public:
 	void build(); // 장면을 불러옵니다.
 	bool update();
 	void quit();
+	double get_elapsed_second() const;
+
+	size_t make_sprite(HINSTANCE instance, const UINT resource, const UINT number, const int xoff, const int yoff);
+	size_t make_sprite(const LPCTSTR path, const UINT number, const int xoff, const int yoff);
+	shared_ptr<GameSprite>& find_sprite(const size_t index);
 
 	void on_create();
 	void on_destroy();
-	void on_update(double);
-	void on_update_later(double);
-	void on_render(HWND);
+	void on_update(const double frame_advance);
+	void on_update_later(const double frame_advance);
+	void on_mousedown(const WPARAM button, const LPARAM cursor);
+	void on_mouseup(const WPARAM button, const LPARAM cursor);
+	void on_keydown(const WPARAM key);
+	void on_keyup(const WPARAM key);
+	void on_render(HWND window);
 
-	template<class GScene = GameScene>
-	GameScene* state_push() {
-		var room = new GScene();
+	template<class GScene>
+	GScene* state_push() {
+		auto room = new GScene();
 		states.push_back(room);
 
-		return (GameScene*)room;
+		return room;
 	}
 
 	bool state_is_done() const;
@@ -52,10 +58,17 @@ public:
 
 	GameScene* state_id;
 	INT state_handle = 0;
+
+	LONG mouse_x, mouse_y; // 마우스 좌표
 private:
-	PAINTSTRUCT painter; // 렌더링 정보
+	using tick_type = std::chrono::microseconds;
+	using clock_type = std::chrono::system_clock::time_point;
+
+	clock_type clock_previos, clock_now;
+	LONGLONG elapsed;
 	double delta_time; // 실제 시간
-	//GameChrono game_clock; // 게임 시간 재기 객체입니다.
+
+	PAINTSTRUCT painter; // 렌더링 정보
 
 	// 게임 장면 모음
 	deque<GameScene*> states;

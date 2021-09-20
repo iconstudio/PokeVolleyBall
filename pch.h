@@ -39,7 +39,7 @@ class sceneSetting;
 class GameInstance;
 class oSolid;
 class oGraviton;
-class oValleyBall;
+class oVolleyBall;
 class oPokemon;
 class oPlayerPoke;
 class oEnemyPoke;
@@ -80,10 +80,10 @@ constexpr double pixel_to_meter = 0.03125; // 32px == 1m
 constexpr double meter_to_pixel = 32.; // 1m == 32px, 1km == 32000px
 constexpr double sec_to_hour = 3600.;
 
-constexpr double px_per_sec(const double km_per_hr) {
-	var result = km_per_hr * meter_to_pixel * 1000 / sec_to_hour;
+constexpr double phy_velocity = ((1000.0 / sec_to_hour) * meter_to_pixel);
 
-	return result;
+constexpr double km_per_hr(const double velocity) {
+	return velocity * phy_velocity;
 }
 
 constexpr COLORREF COLOR_BLACK = RGB(0, 0, 0);

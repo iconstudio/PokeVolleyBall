@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31613.86
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PokeValleyBall", "PokeValleyBall.vcxproj", "{8BDCC00D-C89C-4B02-864A-FBF4E848A42C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PokeVolleyBall", "PokeValleyBall.vcxproj", "{8BDCC00D-C89C-4B02-864A-FBF4E848A42C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

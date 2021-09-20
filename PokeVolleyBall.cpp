@@ -1,4 +1,5 @@
-﻿// PokeValleyBall.cpp : 애플리케이션에 대한 진입점을 정의합니다.
+﻿#include "..\VolleyBallProject\VolleyBallProject.h"
+// PokeValleyBall.cpp : 애플리케이션에 대한 진입점을 정의합니다.
 //
 #include "pch.h"
 #include "stdafx.h"
@@ -8,6 +9,7 @@
 
 #define MAX_LOADSTRING 100
 #define RENDER_TIMER_ID 0
+constexpr auto GROUND_Y = RESOLUTION_H - 32;
 
 
 // 전역 변수:
@@ -16,27 +18,9 @@ WCHAR szWindowClass[MAX_LOADSTRING];						// 기본 창 클래스 이름입니�
 WindowsClient game_client{ RESOLUTION_W, RESOLUTION_H };	// 클라이언트 객체입니다.
 GameFramework game_framework;
 
+auto SPRITE_BALL = game_framework.make_sprite(TEXT("res\\ball.png"), 1, 32, 32);
 
-template<class GInstance>
-auto instance_nearest(double x, double y) {
-
-}
-
-template<class GInstance1, class GInstance2>
-auto instance_place(GInstance1 whoami, double x, double y) {
-
-}
-
-template<class GInstance>
-auto instance_position(double x, double y) {
-	if (game_framework.state_id)
-		return new GInstance(game_framework.state_id, x, y);
-	else
-		return nullptr;
-}
-
-template<>
-auto instance_position<ALL>(double x, double y) {}
+LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -73,9 +57,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	game_framework.input_register(VK_DOWN);
 
 	var room_0 = game_framework.state_push<sceneGame>();
-	var inst_0 = room_0->instance_create<oValleyBall>(0.0, 0.0);
-	var find_0 = room_0->instance_seek<oValleyBall>(0);
-	cout << find_0->done << endl;
+	//var find_0 = room_0->instance_id(0);
+
 
 	// 게임 빌드
 	game_framework.build();
@@ -83,10 +66,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	// 기본 메시지 루프입니다:
 	bool done = false;
 
-	while (true) { // 1
+	while (true) {
 		game_framework.on_create();
 
-		while (true) { // 2
+		while (!game_framework.state_is_done()) {
 			if (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
 				if (msg.message == WM_QUIT) {
 					done = true;
@@ -97,27 +80,23 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 					::TranslateMessage(&msg);
 					::DispatchMessage(&msg);
 				}
+			} else {
+				//game_framework.update();
 			}
+		}
 
-			auto status = game_framework.update();
-			if (!status) { // The current state is completed.
-				break;
-			}
-		} // 2
+		// 현재 상태가 완료됨
 		game_framework.on_destroy();
 
 		if (game_framework.state_remains()) {
 			game_framework.state_jump_next();
 		} else {
-			break;
+			//break;
 		}
 
 		if (done)
 			break;
-	} // 1
-
-	game_framework.quit();
-	game_framework.state_clear();
+	}
 
 	return (int)msg.wParam;
 }
@@ -144,57 +123,42 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
 		// 마우스 왼쪽 누름
 		case WM_LBUTTONDOWN:
 		{
-			auto vk_status = game_framework.key_checkers[VB_LEFT];
-			vk_status->pressing = true;
-
-			game_framework.mouse_x = LOWORD(lParam);
-			game_framework.mouse_y = HIWORD(lParam);
+			game_framework.on_mousedown(VB_LEFT, lParam);
 		}
 		break;
 
 		// 마우스 왼쪽 뗌
 		case WM_LBUTTONUP:
 		{
-			auto vk_status = game_framework.key_checkers[VB_LEFT];
-			vk_status->pressing = false;
+			game_framework.on_mouseup(VB_LEFT, lParam);
 		}
 		break;
 
 		// 마우스 오른쪽 누름
 		case WM_RBUTTONDOWN:
 		{
-			auto vk_status = game_framework.key_checkers[VB_RIGHT];
-			vk_status->pressing = true;
-
-			game_framework.mouse_x = LOWORD(lParam);
-			game_framework.mouse_y = HIWORD(lParam);
+			game_framework.on_mousedown(VB_RIGHT, lParam);
 		}
 		break;
 
 		// 마우스 오른쪽 뗌
 		case WM_RBUTTONUP:
 		{
-			auto vk_status = game_framework.key_checkers[VB_RIGHT];
-			vk_status->pressing = false;
+			game_framework.on_mouseup(VB_RIGHT, lParam);
 		}
 		break;
 
 		// 마우스 휠 누름
 		case WM_MBUTTONDOWN:
 		{
-			auto vk_status = game_framework.key_checkers[VB_MIDDLE];
-			vk_status->pressing = true;
-
-			game_framework.mouse_x = LOWORD(lParam);
-			game_framework.mouse_y = HIWORD(lParam);
+			game_framework.on_mousedown(VB_MIDDLE, lParam);
 		}
 		break;
 
 		// 마우스 휠 뗌
 		case WM_MBUTTONUP:
 		{
-			auto vk_status = game_framework.key_checkers[VB_MIDDLE];
-			vk_status->pressing = false;
+			game_framework.on_mouseup(VB_MIDDLE, lParam);
 		}
 		break;
 
@@ -206,20 +170,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
 				break;
 			}
 			
-			auto vk_status = game_framework.key_checkers.find(wParam);
-			if (vk_status != game_framework.key_checkers.end()) {
-				vk_status->second->pressing = true;
-			}
+			game_framework.on_keydown(wParam);
 		}
 		break;
 
 		// 키보드 뗌
 		case WM_KEYUP:
 		{
-			auto vk_status = game_framework.key_checkers.find(wParam);
-			if (vk_status != game_framework.key_checkers.end()) {
-				vk_status->second->pressing = false;
-			}
+			game_framework.on_keyup(wParam);
 		}
 		break;
 
@@ -227,6 +185,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
 		case WM_TIMER:
 		{
 			Render::refresh(hwnd);
+			game_framework.update();
 		}
 		break;
 
@@ -270,28 +229,47 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 
-GameBehavior::GameBehavior() : data(0), done(false) {}
-
-GameBehavior::~GameBehavior() {}
 
 GameInstance::GameInstance(GameScene* nclan, double nx, double ny)
-	: parent(), room(nclan), sprite_index(-1), box{ 0, 0, 0, 0 }
-	, x(nx), y(ny), image_number(0), image_index(0.0), image_speed(0.0) {}
+	: parent(), room(nclan), sprite_index(nullptr), box{ 0, 0, 0, 0 }
+	, x(nx), y(ny), image_index(0.0), image_speed(0.0) {}
 
 GameInstance::~GameInstance() {
-	signout();
-}
-
-void GameInstance::signout() {
 	if (room) {
 		room->instance_uninstall(this);
 		room = nullptr;
 	}
+	if (sprite_index)
+		sprite_index.reset();
 }
 
-void GameInstance::signin(GameScene* enter) {
-	enter->instance_install(this);
-	room = enter;
+void GameInstance::sprite_set(shared_ptr<GameSprite>& sprite) {
+	sprite_index = sprite;
+	CopyRect(&box, &(sprite->bbox));
+}
+
+void GameInstance::collision_update() {
+	if (sprite_index) {
+		//RectInRegion
+	}
+}
+
+bool GameInstance::collide_with(shared_ptr<GameInstance>& other) {
+	if (sprite_index && other->sprite_index) {
+		auto& otherbox = other->box;
+		OffsetRect(&otherbox, other->x, other->y);
+		OffsetRect(&box, x, y);
+
+		RECT temp;
+		bool result = (bool)IntersectRect(&temp, &box, &otherbox);
+
+		OffsetRect(&otherbox, -(other->x), -(other->y));
+		OffsetRect(&box, -x, -y);
+
+		return result;
+	}
+
+	return false;
 }
 
 void GameInstance::on_create() {}
@@ -301,86 +279,80 @@ void GameInstance::on_destroy() {}
 void GameInstance::on_update(double frame_advance) {}
 
 void GameInstance::on_update_later(double frame_advance) {
-	if (-1 != sprite_index) {
+	if (sprite_index) {
 		double animation_speed;
+		auto image_number = sprite_index->number;
+
 		if (1 < image_number && 0.0 != (animation_speed = image_speed * frame_advance)) {
 			image_index += animation_speed;
 
+			// clipping
 			while (image_index < 0) image_index += image_number;
 			while (image_number <= image_index) image_index -= image_number;
 		}
 	}
 }
 
-void GameInstance::on_render(HDC canvas) {}
-
-
+void GameInstance::on_render(HDC canvas) {
+	if (sprite_index) {
+		sprite_index->draw(canvas, x, y, image_index, 0.0, 1.0, 1.0);
+	}
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 
-sceneIntro::sceneIntro() : parent() {}
+void sceneGame::on_create() {
+	parent::on_create();
 
-sceneIntro::~sceneIntro() {}
+	ball = instance_create<oVolleyBall>(40.0, 40.0);
+}
 
-sceneTitle::sceneTitle() : parent() {}
+void sceneGame::on_destroy() {
+	parent::on_destroy();
+}
 
-sceneTitle::~sceneTitle() {}
+void sceneGame::on_update(double frame_advance) {
+	parent::on_update(frame_advance);
+}
 
-sceneGame::sceneGame() {}
+void sceneGame::on_update_later(double frame_advance) {
+	parent::on_update_later(frame_advance);
+}
 
-sceneGame::~sceneGame() {}
-
-void sceneGame::on_create() {}
-
-void sceneGame::on_destroy() {}
-
-void sceneGame::on_update(double frame_advance) {}
-
-void sceneGame::on_update_later(double frame_advance) {}
-
-void sceneGame::on_render(HDC canvas) {}
-
-sceneMainMenu::sceneMainMenu() {}
-
-sceneMainMenu::~sceneMainMenu() {}
+void sceneGame::on_render(HDC canvas) {
+	parent::on_render(canvas);
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 oGraviton::oGraviton(GameScene* nclan, double nx, double ny)
-	: parent(nclan, nx, ny), hspeed(0.0), vspeed(0.0), gravity(GRAVITY) {
+	: parent(nclan, nx, ny), hspeed(0.0), vspeed(0.0), gravity(GRAVITY), hbounce(0.0), vbounce(0.0) {
 }
-
-void oGraviton::on_create() {}
-
-void oGraviton::on_destroy() {}
 
 void oGraviton::on_update(double frame_advance) {
 	if (frame_advance <= 0)
 		return;
 
-	var xspeed = px_per_sec(hspeed) * frame_advance;
-	if (0.0 != xspeed) {
-		GameBehavior* check_horizontal;
-		if (0.0 < xspeed)
-			check_horizontal = false; // instance_place<oSolid>(x + xspeed + 1, y);
-		else
-			check_horizontal = false; // instance_place<oSolid>(x + xspeed - 1, y);
+	if (y < GROUND_Y) {
+		vspeed += gravity;
+	}
 
-		if (check_horizontal) {
-			
+	auto yspeed = km_per_hr(vspeed);
+
+	if (vspeed < 0) {
+		y += yspeed;
+	} else {
+		if (y + yspeed + 1 < GROUND_Y) {
+			y += yspeed;
 		} else {
-			x += xspeed;
+			y = GROUND_Y;
 		}
 	}
-
-	if (0 != hspeed) {
-		var yspeed = px_per_sec(vspeed);
-
-		y += yspeed;
-	}
-	
 }
 
-void oGraviton::on_render(HDC canvas) {}
-
-oValleyBall::oValleyBall(GameScene* nclan, double nx, double ny) : parent(nclan, nx, ny) {}
+oVolleyBall::oVolleyBall(GameScene* nclan, double nx, double ny)
+	: parent(nclan, nx, ny) {
+	sprite_index = game_framework.find_sprite(SPRITE_BALL);
+	hbounce = 0.5;
+	vbounce = 0.5;
+}
