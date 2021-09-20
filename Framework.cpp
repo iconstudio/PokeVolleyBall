@@ -6,11 +6,11 @@
 GameFramework::GameFramework()
 	: mouse_x(0), mouse_y(0), delta_time(0.0), state_id(nullptr), painter{}, elapsed(0) {}
 
-void GameFramework::input_register(int virtual_button) {
+void GameFramework::input_register(const WPARAM virtual_button) {
 	key_checkers.emplace(virtual_button, make_shared<GameInput>());
 }
 
-bool GameFramework::input_check(int virtual_button) {
+bool GameFramework::input_check(const WPARAM virtual_button) {
 	var checker = key_checkers.find(virtual_button);
 	if (checker != key_checkers.end()) {
 		return checker->second->pressing;
@@ -70,12 +70,8 @@ size_t GameFramework::make_sprite(const LPCTSTR path, const UINT number, const i
 	return loc;
 }
 
-shared_ptr<GameSprite>& GameFramework::find_sprite(const size_t index) {
-	if (index < sprites.size()) {
-		return sprites.at(index);
-	} else {
-		throw std::exception("스프라이트를 찾을 수 없습니다!");
-	}
+shared_ptr<GameSprite> GameFramework::find_sprite(const size_t index) {
+	return sprites.at(index);
 }
 
 bool GameFramework::state_is_done() const {

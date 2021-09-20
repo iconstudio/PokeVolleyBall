@@ -137,6 +137,9 @@ bool GameSprite::__process_image(CImage& image, const size_t width, const size_t
 				// 4. 낱장 삽입 (소유권 이전으로 이제 수정 불가)
 				frames.emplace_back(image_slice);
 			}
+
+			this->width = slice_w;
+			this->height = raw_height;
 		} else { // one frame
 			this->width = raw_width;
 			this->height = raw_height;
@@ -184,8 +187,8 @@ void GameSprite::__draw_single(HDC surface, CImage& image, const double dx, cons
 		SetWorldTransform(surface, &xform);
 		SetGraphicsMode(surface, nGraphicsMode);
 	} else {
-		double tx = dx - xoffset * xscale;
-		double ty = dy - yoffset * yscale;
+		int tx = (int)(dx - xoffset * xscale);
+		int ty = (int)(dy - yoffset * yscale);
 
 		image.Draw(surface, tx, ty, width * abs(xscale), height * abs(yscale), 0, 0, width, height);
 	}

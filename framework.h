@@ -15,8 +15,8 @@ class GameFramework {
 public:
 	GameFramework();
 
-	void input_register(int virtual_button);
-	bool input_check(int virtual_button);
+	void input_register(const WPARAM virtual_button);
+	bool input_check(const WPARAM virtual_button);
 	//bool input_check_pressed(int button);
 	//bool input_check_released(int button);
 
@@ -28,7 +28,7 @@ public:
 
 	size_t make_sprite(HINSTANCE instance, const UINT resource, const UINT number, const int xoff, const int yoff);
 	size_t make_sprite(const LPCTSTR path, const UINT number, const int xoff, const int yoff);
-	shared_ptr<GameSprite>& find_sprite(const size_t index);
+	shared_ptr<GameSprite> find_sprite(const size_t index);
 
 	void on_create();
 	void on_destroy();

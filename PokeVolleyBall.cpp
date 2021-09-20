@@ -1,5 +1,4 @@
-﻿#include "..\VolleyBallProject\VolleyBallProject.h"
-// PokeValleyBall.cpp : 애플리케이션에 대한 진입점을 정의합니다.
+﻿// PokeValleyBall.cpp : 애플리케이션에 대한 진입점을 정의합니다.
 //
 #include "pch.h"
 #include "stdafx.h"
@@ -9,7 +8,7 @@
 
 #define MAX_LOADSTRING 100
 #define RENDER_TIMER_ID 0
-constexpr auto GROUND_Y = RESOLUTION_H - 32;
+constexpr long GROUND_Y = RESOLUTION_H - 100;
 
 
 // 전역 변수:
@@ -19,6 +18,8 @@ WindowsClient game_client{ RESOLUTION_W, RESOLUTION_H };	// 클라이언트 객�
 GameFramework game_framework;
 
 auto SPRITE_BALL = game_framework.make_sprite(TEXT("res\\ball.png"), 1, 32, 32);
+auto SPRITE_PIKA = game_framework.make_sprite(TEXT("res\\pika.png"), 1, 18, 19);
+
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 
@@ -51,10 +52,23 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	game_framework.init();
 
 	// 사용자 코드입니다:
+	game_framework.input_register(VK_ESCAPE); // 나가기 및 취소
+	game_framework.input_register(VK_RETURN); // 확인
+	game_framework.input_register(VK_SPACE); // 점프 및 확인
+
 	game_framework.input_register(VK_LEFT);
 	game_framework.input_register(VK_RIGHT);
 	game_framework.input_register(VK_UP);
 	game_framework.input_register(VK_DOWN);
+	game_framework.input_register(0x5A); // Z
+	game_framework.input_register(0x58); // X
+	game_framework.input_register(0x43); // C
+	
+	game_framework.input_register(0x52); // R - 게임 다시 시작 (장면이 sceneGame일때만 작동)
+	game_framework.input_register(VK_F1); // 도움말
+	game_framework.input_register(VK_F2); // 게임 전체 다시 시작
+	game_framework.input_register(VK_F3); // 현재 장면만 다시 시작
+
 
 	var room_0 = game_framework.state_push<sceneGame>();
 	//var find_0 = room_0->instance_id(0);
@@ -230,81 +244,20 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 
-GameInstance::GameInstance(GameScene* nclan, double nx, double ny)
-	: parent(), room(nclan), sprite_index(nullptr), box{ 0, 0, 0, 0 }
-	, x(nx), y(ny), image_index(0.0), image_speed(0.0) {}
-
-GameInstance::~GameInstance() {
-	if (room) {
-		room->instance_uninstall(this);
-		room = nullptr;
-	}
-	if (sprite_index)
-		sprite_index.reset();
-}
-
-void GameInstance::sprite_set(shared_ptr<GameSprite>& sprite) {
-	sprite_index = sprite;
-	CopyRect(&box, &(sprite->bbox));
-}
-
-void GameInstance::collision_update() {
-	if (sprite_index) {
-		//RectInRegion
-	}
-}
-
-bool GameInstance::collide_with(shared_ptr<GameInstance>& other) {
-	if (sprite_index && other->sprite_index) {
-		auto& otherbox = other->box;
-		OffsetRect(&otherbox, other->x, other->y);
-		OffsetRect(&box, x, y);
-
-		RECT temp;
-		bool result = (bool)IntersectRect(&temp, &box, &otherbox);
-
-		OffsetRect(&otherbox, -(other->x), -(other->y));
-		OffsetRect(&box, -x, -y);
-
-		return result;
-	}
-
-	return false;
-}
-
-void GameInstance::on_create() {}
-
-void GameInstance::on_destroy() {}
-
-void GameInstance::on_update(double frame_advance) {}
-
-void GameInstance::on_update_later(double frame_advance) {
-	if (sprite_index) {
-		double animation_speed;
-		auto image_number = sprite_index->number;
-
-		if (1 < image_number && 0.0 != (animation_speed = image_speed * frame_advance)) {
-			image_index += animation_speed;
-
-			// clipping
-			while (image_index < 0) image_index += image_number;
-			while (image_number <= image_index) image_index -= image_number;
-		}
-	}
-}
-
-void GameInstance::on_render(HDC canvas) {
-	if (sprite_index) {
-		sprite_index->draw(canvas, x, y, image_index, 0.0, 1.0, 1.0);
-	}
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////
 
-void sceneGame::on_create() {
-	parent::on_create();
+sceneGame::sceneGame()
+	: turn(TURN::player), ball(nullptr), player(nullptr), enemy(nullptr)
+	, player_sx(RESOLUTION_W * 0.3), player_sy(GROUND_Y - 30), enemy_sx(RESOLUTION_W * 0.7), enemy_sy(GROUND_Y - 30)
+	, ball_player_sx(player_sx), ball_player_sy(player_sy - 200), ball_enemy_sx(enemy_sx), ball_enemy_sy(enemy_sy - 200) {
+}
 
-	ball = instance_create<oVolleyBall>(40.0, 40.0);
+void sceneGame::on_create() {
+	ball = instance_create<oVolleyBall>(ball_player_sx, ball_player_sy);
+	player = instance_create<oPlayerPoke>(player_sx, player_sy);
+	enemy = instance_create<oEnemyPoke>(enemy_sx, enemy_sy);
+
+	parent::on_create();
 }
 
 void sceneGame::on_destroy() {
@@ -329,11 +282,13 @@ oGraviton::oGraviton(GameScene* nclan, double nx, double ny)
 	: parent(nclan, nx, ny), hspeed(0.0), vspeed(0.0), gravity(GRAVITY), hbounce(0.0), vbounce(0.0) {
 }
 
+// 중력 개체 동작
 void oGraviton::on_update(double frame_advance) {
 	if (frame_advance <= 0)
 		return;
 
-	if (y < GROUND_Y) {
+	double checky = y + box.bottom;
+	if (checky < GROUND_Y) {
 		vspeed += gravity;
 	}
 
@@ -342,17 +297,67 @@ void oGraviton::on_update(double frame_advance) {
 	if (vspeed < 0) {
 		y += yspeed;
 	} else {
-		if (y + yspeed + 1 < GROUND_Y) {
+		checky = y + box.bottom + yspeed + 1;
+
+		if (checky < GROUND_Y) {
 			y += yspeed;
 		} else {
-			y = GROUND_Y;
+			vspeed = 0;
+
+			y = GROUND_Y - box.bottom - 1;
 		}
 	}
 }
 
 oVolleyBall::oVolleyBall(GameScene* nclan, double nx, double ny)
 	: parent(nclan, nx, ny) {
-	sprite_index = game_framework.find_sprite(SPRITE_BALL);
+	auto sprite = game_framework.find_sprite(SPRITE_BALL);
+	sprite_set(sprite);
+
 	hbounce = 0.5;
 	vbounce = 0.5;
+}
+
+oPokemon::oPokemon(GameScene* nclan, double nx, double ny)
+	: parent(nclan, nx, ny) {}
+
+void oPokemon::on_update(double frame_advance) {
+	parent::on_update(frame_advance);
+}
+
+void oPokemon::jump(double power) {}
+
+// 플레이어
+oPlayerPoke::oPlayerPoke(GameScene* nclan, double nx, double ny)
+	: parent(nclan, nx, ny) {
+	auto sprite = game_framework.find_sprite(SPRITE_PIKA);
+	sprite_set(sprite);
+}
+
+// 플레이어 동작
+void oPlayerPoke::on_update(double frame_advance) {
+	parent::on_update(frame_advance);
+
+	int check_left = game_framework.input_check(VK_LEFT);
+	int check_right = game_framework.input_check(VK_RIGHT);
+	int check_up = game_framework.input_check(VK_UP);
+	int check_down = game_framework.input_check(VK_DOWN);
+
+	int check_hor = (check_right - check_left);
+	if (check_hor != 0) {
+		//
+		x += check_hor * frame_advance * 120;
+	}
+
+
+}
+
+oEnemyPoke::oEnemyPoke(GameScene* nclan, double nx, double ny)
+	: parent(nclan, nx, ny) {
+	auto sprite = game_framework.find_sprite(SPRITE_PIKA);
+	sprite_set(sprite);
+}
+
+void oEnemyPoke::on_update(double frame_advance) {
+	parent::on_update(frame_advance);
 }

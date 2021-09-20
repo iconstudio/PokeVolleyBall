@@ -37,12 +37,14 @@ public:
 	virtual void on_update_later(double) override; // animation
 	virtual void on_render(HDC) override;
 
-	GameScene* room; // 소속 장면
+	double x, y; // 좌표
 
+	shared_ptr<GameSprite> sprite_index; // 스프라이트
 	RECT box; // 충돌체
-	shared_ptr<GameSprite> sprite_index;
-	double x, y, image_index, image_speed;
+	double image_index, image_speed; // 애니메이션
+	double image_xscale, image_yscale, image_angle;
 
+	GameScene* room; // 소속 장면
 };
 
 
@@ -61,9 +63,12 @@ public:
 	template<class _GObj>
 	auto instance_create(const double x, const double y) {
 		auto lptr = new _GObj(this, x, y);
-		instance_install<_GObj>(lptr);
 		lptr->room = this;
-		
+
+		auto loc = lptr->my_serial;
+		auto rptr = shared_ptr<GameInstance>(lptr);
+		instance_garages.emplace(loc, rptr);
+
 		return lptr;
 	}
 
