@@ -6,6 +6,7 @@
 class GameFramework {
 public:
 	GameFramework();
+	~GameFramework();
 
 	void input_register(const WPARAM virtual_button);
 	bool input_check(const WPARAM virtual_button);

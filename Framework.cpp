@@ -6,6 +6,13 @@
 GameFramework::GameFramework()
 	: mouse_x(0), mouse_y(0), delta_time(0.0), state_id(nullptr), painter{}, elapsed(0) {}
 
+GameFramework::~GameFramework() {
+	for (auto& sprite : sprites)
+		sprite.reset();
+
+	sprites.clear();
+}
+
 void GameFramework::input_register(const WPARAM virtual_button) {
 	key_checkers.emplace(virtual_button, make_shared<GameInput>());
 }
