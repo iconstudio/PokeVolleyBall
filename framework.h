@@ -2,14 +2,6 @@
 #include "resource.h"
 
 
-struct ALL {};
-
-class GameInput {
-public:
-	bool pressing = false;
-};
-
-
 // 게임 구동부
 class GameFramework {
 public:
@@ -24,6 +16,11 @@ public:
 	void build(); // 장면을 불러옵니다.
 	bool update();
 	void quit();
+
+	void delta_start();
+	void delta_inspect();
+
+	// 지난 실제 시간을 구합니다.
 	double get_elapsed_second() const;
 
 	size_t make_sprite(HINSTANCE instance, const UINT resource, const UINT number, const int xoff, const int yoff);
@@ -56,11 +53,18 @@ public:
 
 	friend LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
-	GameScene* state_id;
-	INT state_handle = 0;
+	GameScene* state_id; // 현재 상태 포인터
+	INT state_handle = 0; // 현재 상태의 위치 번호
 
 	LONG mouse_x, mouse_y; // 마우스 좌표
 private:
+	class GameInput {
+	public:
+		bool pressed = false; // 누름
+		bool released = false; // 뗌
+		bool pressing = false; // 누르는 중
+	};
+
 	using tick_type = std::chrono::microseconds;
 	using clock_type = std::chrono::system_clock::time_point;
 

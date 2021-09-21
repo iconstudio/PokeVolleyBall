@@ -11,7 +11,7 @@ void GameFramework::input_register(const WPARAM virtual_button) {
 }
 
 bool GameFramework::input_check(const WPARAM virtual_button) {
-	var checker = key_checkers.find(virtual_button);
+	auto checker = key_checkers.find(virtual_button);
 	if (checker != key_checkers.end()) {
 		return checker->second->pressing;
 	}
@@ -31,25 +31,33 @@ void GameFramework::init() {
 void GameFramework::build() {
 	if (state_remains())
 		state_jump(0);
+	delta_start();
 }
 
 bool GameFramework::update() {
 	if (state_is_done()) {
 		return false;
 	}
-	clock_previos = std::chrono::system_clock::now();
+	
 	delta_time = get_elapsed_second();
 	on_update(delta_time);
 	on_update_later(delta_time);
-	clock_now = std::chrono::system_clock::now();
-
-	elapsed = std::chrono::duration_cast<tick_type>(clock_now - clock_previos).count();
 
 	return true;
 }
 
 void GameFramework::quit() {
 	state_clear();
+}
+
+void GameFramework::delta_start() {
+	clock_previos = std::chrono::system_clock::now();
+}
+
+void GameFramework::delta_inspect() {
+	clock_now = std::chrono::system_clock::now();
+
+	elapsed = std::chrono::duration_cast<tick_type>(clock_now - clock_previos).count();
 }
 
 double GameFramework::get_elapsed_second() const {
@@ -194,7 +202,6 @@ void GameFramework::on_render(HWND hwnd) {
 	// 백 버퍼 -> 화면 버퍼
 	BitBlt(surface_app, 0, 0, RESOLUTION_W, RESOLUTION_H, surface_back, 0, 0, SRCCOPY);
 	Render::draw_end(surface_back, m_newoldBit, m_newBit);
-
 
 	DeleteDC(surface_back);
 	DeleteDC(surface_double);

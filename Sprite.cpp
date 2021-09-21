@@ -79,7 +79,8 @@ GameSprite::~GameSprite() {
 
 void GameSprite::draw(HDC surface, const double dx, const double dy, const UINT index, const double angle, const double xscale, const double yscale) {
 	if (1 < number) {
-		
+		auto frame = frames.at(index).get();
+		__draw_single(surface, *frame, dx, dy, angle, xscale, yscale);
 	} else {
 		__draw_single(surface, raw, dx, dy, angle, xscale, yscale);
 	}
@@ -145,7 +146,7 @@ bool GameSprite::__process_image(CImage& image, const size_t width, const size_t
 			this->height = raw_height;
 		}
 
-		set_bbox(-xoffset, -yoffset, this->width - xoffset, this->height - yoffset);
+		set_bbox(-xoffset, this->width - xoffset, -yoffset, this->height - yoffset);
 	} else { // failed!
 		return false;
 	}
@@ -165,26 +166,19 @@ void GameSprite::__draw_single(HDC surface, CImage& image, const double dx, cons
 		// 실제와는 달리 y 좌표가 뒤집힘
 		XFORM xform;
 		xform.eM11 = cosine;
-		xform.eM12 = sine;
+		xform.eM12 = sine ;
 		xform.eM21 = -sine;
 		xform.eM22 = cosine;
 		xform.eDx = (center_x - cosine * center_x + sine * center_y);
 		xform.eDy = (center_y - cosine * center_y - sine * center_x);
 
 		Render::transform_set(surface, xform);
+
 		center_x -= xoffset * xscale;
 		center_y -= yoffset * yscale;
 		image.Draw(surface, center_x, center_y, width * abs(xscale), height * abs(yscale), 0, 0, width, height);
 
-		//Render::transform_set_identity(surface);
-		xform.eM11 = (float)1.0;
-		xform.eM12 = (float)0;
-		xform.eM21 = (float)0;
-		xform.eM22 = (float)1.0;
-		xform.eDx = (float)0;
-		xform.eDy = (float)0;
-
-		SetWorldTransform(surface, &xform);
+		Render::transform_set_identity(surface);
 		SetGraphicsMode(surface, nGraphicsMode);
 	} else {
 		int tx = (int)(dx - xoffset * xscale);

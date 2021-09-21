@@ -5,16 +5,54 @@
 #include "Sprite.h"
 #include "Core.h"
 
-
-constexpr double GRAVITY = km_per_hr(0.005);
-
-enum class TURN {
-	player, enemy
-};
-
+#define VK_CHAR_C 0x43
+#define VK_CHAR_R 0x52
+#define VK_CHAR_X 0x58
+#define VK_CHAR_Z 0x5A
 
 // 이 코드 모듈에 포함된 함수의 선언을 전달합니다:
+LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK About(HWND, UINT, WPARAM, LPARAM);
+
+constexpr LONG GROUND_Y = RESOLUTION_H - 100; // 접지 좌표
+constexpr double GRAVITY = 6.0; // 시간 당 미터 이동거리
+
+constexpr double PIKA_X_START_PLAYER = RESOLUTION_W * 0.3; // 플레이어 시작 x 좌표
+constexpr double PIKA_X_START_ENEMY = RESOLUTION_W * 0.7; // 상대 시작 x 좌표
+constexpr double PIKA_Y_START = GROUND_Y - 30.; // 공통 시작 y 좌표
+
+constexpr double BALL_PLAYER_X_START = PIKA_X_START_PLAYER; // 플레이어 서브의 공 시작 x 좌표
+constexpr double BALL_PLAYER_Y_START = PIKA_Y_START - 200.; // 플레이어 서브의 공 시작 y 좌표
+constexpr double BALL_ENEMY_X_START = PIKA_X_START_ENEMY; // 적 서브의 공 시작 x 좌표
+constexpr double BALL_ENEMY_Y_START = PIKA_Y_START - 200.; // 적 서브의 공 시작 y 좌표
+
+constexpr double PIKA_MOVE_XACCEL = 4.; // 피카츄 좌우 가속도
+constexpr double PIKA_MOVE_XVELOCITY = 25.; // 피카츄 좌우 이동 속도
+constexpr double PIKA_JUMP_VELOCITY = 140.; // 피카츄 점프 속도
+
+constexpr double PIKA_APGUREUGI_GRAVITY = 1.1; // 앞구르기 할때 바뀌는 중력
+constexpr double PIKA_APGUREUGI_XVELOCITY = 40.; // 앞구르기 전진 속도
+constexpr double PIKA_APGUREUGI_YVELOCITY = 11.; // 앞구르기 뛰기 속도
+constexpr double PIKA_APGUREUGI_BOUNCE_YVELOCITY = 6.;
+constexpr double PIKA_APGUREUGI_BOUNCE_STD_YVELOCITY = 7.;
+constexpr double PIKA_APGUREUGI_REBOUND_DURATION = 0.3; // 앞구르기 낙법 후 회복 시간
+
+constexpr double PIKA_STAMINA_MAX = 10.0; // 최대 체력 (시간)
+constexpr double STAMINA_SPEND_APGUREUGI = 1.5; // 앞구르기의 소모 체력 (시간)
+constexpr double STAMINA_SPEND_BLINK = 1.5; // 전광석화의 소모 체력 (시간)
+
+constexpr double FENCE_X_LEFT = RESOLUTION_W * 0.5 - 8.0; // 가운데 네트의 좌측 경계
+constexpr double FENCE_X_RIGHT = RESOLUTION_W * 0.5 + 8.0; // 가운데 네트의 우측 경계
+constexpr double PLAYER_X_MIN = 10.0;
+constexpr double PLAYER_X_MAX = FENCE_X_LEFT;
+constexpr double ENEMY_X_MIN = FENCE_X_RIGHT;
+constexpr double ENEMY_X_MAX = RESOLUTION_W - 10.0;
+constexpr double FENCE_APGUREUGI_BOUNCE_MIN_XVELOCITY = 8.; // 앞구르기 할때 벽에 닿으면 팅겨낼 속도의 최소값
+
+
+enum class LOOKDIR : int { LEFT = -1, RIGHT = 1 };
+
+enum class TURN { player, enemy };
 
 class GameCamera {
 public:
@@ -33,7 +71,6 @@ public:
 
 	double hspeed, vspeed; // 뷰의 속도 (종속 변수)
 };
-
 
 // 로고 도입부
 class sceneIntro : public GameScene {
@@ -87,11 +124,6 @@ public:
 
 private:
 	TURN turn; // 현재 차례
-
-	const long player_sx, player_sy; // 플레이어 시작 좌표
-	const long enemy_sx, enemy_sy; // 적 시작 좌표
-	const long ball_player_sx, ball_player_sy; // 플레이어 서브의 공 시작 좌표
-	const long ball_enemy_sx, ball_enemy_sy; // 적 서브의 공 시작 좌표
 
 	oVolleyBall* ball;
 	oPlayerPoke* player;
@@ -157,6 +189,10 @@ class oGraviton : public GameInstance {
 
 		virtual void on_update(double frame_advance) override;
 
+		virtual void jump(double power);
+		virtual void contact();
+		virtual void thud();
+
 		double hspeed, vspeed, gravity;
 		double hbounce, vbounce;
 
@@ -180,10 +216,38 @@ public:
 	using parent = oGraviton;
 
 	oPokemon(GameScene* nclan, double nx, double ny);
+	virtual ~oPokemon();
 
+	virtual void on_create() override;
 	virtual void on_update(double frame_advance) override;
 
-	void jump(double power);
+	virtual void move(int direction, double frame_advance);
+	virtual void jump(double power);
+	virtual void thud();
+
+	bool can_action(); // 이동과 점프 가능한지 여부
+	bool can_rollingforward();
+	bool can_blink();
+
+	void rollingforward(); // 앞구르기
+	void blink(); // 전광석화
+
+	void thud_recover(); // 앞구르기 후 회복
+	void blink_recover(); // 전광석화 후 회복
+
+	void look_at(LOOKDIR direction);
+
+	bool jumping, sliding;
+
+	double stamina; // 전방 점프 방지용 체력
+
+	double wake_time;
+	const double wake_period;
+	double x_min, x_max;
+	LOOKDIR dir;
+
+	shared_ptr<GameInstance> ball;
+
 };
 
 class oPlayerPoke : public oPokemon {
@@ -196,8 +260,6 @@ public:
 	oPlayerPoke(GameScene* nclan, double nx, double ny);
 
 	virtual void on_update(double frame_advance) override;
-
-
 };
 
 class oEnemyPoke : public oPokemon {
@@ -210,5 +272,4 @@ public:
 	oEnemyPoke(GameScene* nclan, double nx, double ny);
 
 	virtual void on_update(double frame_advance) override;
-
 };
