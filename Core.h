@@ -27,6 +27,7 @@ public:
 	GameInstance(GameScene*, double = 0.0, double = 0.0);
 	virtual ~GameInstance();
 
+	void sprite_init(shared_ptr<GameSprite>& sprite);
 	void sprite_set(shared_ptr<GameSprite>& sprite);
 	void collision_update();
 	bool collide_with(shared_ptr<GameInstance>& other);
@@ -75,7 +76,7 @@ public:
 	// 모든 인스턴스에서 참조
 	auto instance_id(const size_t index) {
 		auto it = instance_garages.begin();
-		for (int i = 0; i < index; ++i) {
+		for (size_t i = 0; i < index; ++i) {
 			++it;
 		}
 

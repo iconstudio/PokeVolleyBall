@@ -37,9 +37,9 @@ constexpr double PIKA_APGUREUGI_BOUNCE_YVELOCITY = 6.;
 constexpr double PIKA_APGUREUGI_BOUNCE_STD_YVELOCITY = 7.;
 constexpr double PIKA_APGUREUGI_REBOUND_DURATION = 0.3; // 앞구르기 낙법 후 회복 시간
 
-constexpr double PIKA_STAMINA_MAX = 10.0; // 최대 체력 (시간)
-constexpr double STAMINA_SPEND_APGUREUGI = 1.5; // 앞구르기의 소모 체력 (시간)
-constexpr double STAMINA_SPEND_BLINK = 1.5; // 전광석화의 소모 체력 (시간)
+constexpr double PIKA_STAMINA_MAX = 15.0; // 최대 체력 (시간)
+constexpr double STAMINA_SPEND_APGUREUGI = 3.5; // 앞구르기의 소모 체력 (시간)
+constexpr double STAMINA_SPEND_BLINK = 5.5; // 전광석화의 소모 체력 (시간)
 
 constexpr double FENCE_X_LEFT = RESOLUTION_W * 0.5 - 8.0; // 가운데 네트의 좌측 경계
 constexpr double FENCE_X_RIGHT = RESOLUTION_W * 0.5 + 8.0; // 가운데 네트의 우측 경계
@@ -77,9 +77,16 @@ class sceneIntro : public GameScene {
 public:
 	using parent = GameScene;
 
+	virtual void on_create() override;
+	// 도입부 장면이 끝날 때 로고 스프라이트를 삭제합니다. 매우 거대한 스프라이트라서 메모리를 많이 차지합니다.
+	virtual void on_destroy() override;
+	virtual void on_update(double frame_advance) override;
+	virtual void on_render(HDC canvas) override;
+
 private:
-	Phaser state{ 0.4f, 3.0f, 0.6f };
-	double alpha = 0.0;
+	shared_ptr<GameSprite> logo;
+	Phaser state{ 0.6, 3.0, 0.8, 1.0 };
+	double alpha = 1.0;
 };
 
 // 타이틀
@@ -187,6 +194,7 @@ class oGraviton : public GameInstance {
 
 		oGraviton(GameScene* nclan, double nx, double ny);
 
+		// 중력 개체 동작
 		virtual void on_update(double frame_advance) override;
 
 		virtual void jump(double power);
@@ -221,9 +229,9 @@ public:
 	virtual void on_create() override;
 	virtual void on_update(double frame_advance) override;
 
-	virtual void move(int direction, double frame_advance);
-	virtual void jump(double power);
-	virtual void thud();
+	virtual void move(int direction, double frame_advance); // hspeed 기반의 좌우 이동
+	virtual void jump(double power); // vspeed 기반의 점프
+	virtual void thud(); // 착지
 
 	bool can_action(); // 이동과 점프 가능한지 여부
 	bool can_rollingforward();
@@ -237,12 +245,11 @@ public:
 
 	void look_at(LOOKDIR direction);
 
-	bool jumping, sliding;
+	bool jumping, sliding, blinking; // 상태 플래그
 
-	double stamina; // 전방 점프 방지용 체력
+	double stamina; // 체력
 
 	double wake_time;
-	const double wake_period;
 	double x_min, x_max;
 	LOOKDIR dir;
 

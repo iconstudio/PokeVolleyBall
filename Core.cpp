@@ -16,9 +16,14 @@ GameInstance::~GameInstance() {
 		sprite_index.reset();
 }
 
+void GameInstance::sprite_init(shared_ptr<GameSprite>& sprite) {
+	sprite_set(sprite);
+	CopyRect(&box, &(sprite->bbox));
+}
+
 void GameInstance::sprite_set(shared_ptr<GameSprite>& sprite) {
 	sprite_index = sprite;
-	CopyRect(&box, &(sprite->bbox));
+	image_index = 0.0;
 }
 
 void GameInstance::collision_update() {

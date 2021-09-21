@@ -15,8 +15,11 @@ WCHAR szWindowClass[MAX_LOADSTRING];						// 기본 창 클래스 이름입니�
 WindowsClient game_client{ RESOLUTION_W, RESOLUTION_H };	// 클라이언트 객체입니다.
 GameFramework game_framework;
 
+auto SPRITE_LOGO = game_framework.make_sprite(TEXT("res\\kpu2x.png"), 1, 320, 240);
 auto SPRITE_BALL = game_framework.make_sprite(TEXT("res\\ball.png"), 1, 32, 32);
 auto SPRITE_PIKA = game_framework.make_sprite(TEXT("res\\bigpikaboth_strip2.png"), 2, 40, 40);
+auto SPRITE_PIKAWALK_L = game_framework.make_sprite(TEXT("res\\bigpikawalk_strip4.png"), 4, 40, 40);
+auto SPRITE_PIKAWALK_R = game_framework.make_sprite(TEXT("res\\bigpikawalkright_strip4.png"), 4, 40, 40);
 
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -65,8 +68,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	game_framework.input_register(VK_F3); // 현재 장면만 다시 시작
 
 
-	var room_0 = game_framework.state_push<sceneGame>();
-	//var find_0 = room_0->instance_id(0);
+	game_framework.state_push<sceneIntro>();
+	game_framework.state_push<sceneGame>();
 
 
 	// 게임 빌드
@@ -240,6 +243,60 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 
+void sceneIntro::on_create() {
+	parent::on_create();
+
+	logo = game_framework.find_sprite(SPRITE_LOGO);
+}
+
+void sceneIntro::on_destroy() {
+	parent::on_destroy();
+
+	logo->~GameSprite();
+	logo.reset();
+}
+
+void sceneIntro::on_update(double frame_advance) {
+	parent::on_update(frame_advance);
+
+	state.update(frame_advance);
+
+	auto phase = state.get_phase();
+	auto ratio = state.get();
+
+	switch (phase) {
+		case 0: // 페이드 인
+		{
+			alpha = ratio;
+		}
+		break;
+
+		case 1: // 그리기
+		{
+			alpha = 1.0;
+		}
+		break;
+
+		case 2: // 페이드 아웃
+		{
+			alpha = 1.0 - ratio;
+		}
+		break;
+
+		default:
+			break;
+	}
+
+	if (state.get_done()) {
+		done = true;
+	}
+}
+
+void sceneIntro::on_render(HDC canvas) {
+	parent::on_render(canvas);
+
+	logo->draw(canvas, 320, 240, 0, 0, 1, 1, alpha);
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -272,6 +329,7 @@ void sceneGame::on_update_later(double frame_advance) {
 
 void sceneGame::on_render(HDC canvas) {
 	parent::on_render(canvas);
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -280,7 +338,6 @@ oGraviton::oGraviton(GameScene* nclan, double nx, double ny)
 	: parent(nclan, nx, ny), hspeed(0.0), vspeed(0.0), gravity(GRAVITY), hbounce(0.0), vbounce(0.0) {
 }
 
-// 중력 개체 동작
 void oGraviton::on_update(double frame_advance) {
 	if (frame_advance <= 0)
 		return;
@@ -310,7 +367,7 @@ void oGraviton::jump(double power) {
 }
 
 void oGraviton::contact() {
-	y = (double)(GROUND_Y - box.bottom - 1L);
+	y = (double)(GROUND_Y - box.bottom - 1.0);
 }
 
 void oGraviton::thud() {
@@ -321,16 +378,17 @@ void oGraviton::thud() {
 oVolleyBall::oVolleyBall(GameScene* nclan, double nx, double ny)
 	: parent(nclan, nx, ny) {
 	auto sprite = game_framework.find_sprite(SPRITE_BALL);
-	sprite_set(sprite);
+	sprite_init(sprite);
 
 	hbounce = 0.5;
 	vbounce = 0.5;
 }
 
 oPokemon::oPokemon(GameScene* nclan, double nx, double ny)
-	: parent(nclan, nx, ny), jumping(false), sliding(false)
-	, stamina(PIKA_STAMINA_MAX), wake_time(0.0), wake_period(0.3) {
+	: parent(nclan, nx, ny), jumping(false), sliding(false), blinking(false)
+	, stamina(PIKA_STAMINA_MAX), wake_time(0.0) {
 	look_at(LOOKDIR::RIGHT);
+	image_speed = 0.3;
 }
 
 oPokemon::~oPokemon() {
@@ -388,12 +446,6 @@ void oPokemon::on_update(double frame_advance) {
 
 	if (0 < wake_time) {
 		wake_time -= frame_advance;
-	}
-
-	// 공과 충돌했을 때만 기술을 사용할 수 있다.
-	auto collide_with_ball = collide_with(ball);
-	if (collide_with_ball) {
-
 	}
 }
 
@@ -495,7 +547,7 @@ void oPokemon::look_at(LOOKDIR direction) {
 oPlayerPoke::oPlayerPoke(GameScene* nclan, double nx, double ny)
 	: parent(nclan, nx, ny) {
 	auto sprite = game_framework.find_sprite(SPRITE_PIKA);
-	sprite_set(sprite);
+	sprite_init(sprite);
 	look_at(LOOKDIR::RIGHT);
 	x_min = PLAYER_X_MIN;
 	x_max = PLAYER_X_MAX;
@@ -530,13 +582,19 @@ void oPlayerPoke::on_update(double frame_advance) {
 	} else {
 
 	}
+
+	// 공과 충돌했을 때만 기술을 사용할 수 있다.
+	auto collide_with_ball = collide_with(ball);
+	if (collide_with_ball) {
+
+	}
 }
 
 // 적 초기화
 oEnemyPoke::oEnemyPoke(GameScene* nclan, double nx, double ny)
 	: parent(nclan, nx, ny) {
 	auto sprite = game_framework.find_sprite(SPRITE_PIKA);
-	sprite_set(sprite);
+	sprite_init(sprite);
 	look_at(LOOKDIR::LEFT);
 	x_min = ENEMY_X_MIN;
 	x_max = ENEMY_X_MAX;
