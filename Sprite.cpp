@@ -21,7 +21,7 @@ GameSprite::GameSprite(HINSTANCE instance, const UINT resource, const UINT numbe
 	raw_width = raw.GetWidth();
 	raw_height = raw.GetHeight();
 
-	var result = __process_image(raw, raw_width, raw_height);
+	auto result = __process_image(raw, raw_width, raw_height);
 	if (!result) {
 		WCHAR temp[256];
 
@@ -53,7 +53,7 @@ GameSprite::GameSprite(const LPCTSTR path, const UINT number, const int xoff, co
 	raw_width = raw.GetWidth();
 	raw_height = raw.GetHeight();
 
-	var result = __process_image(raw, raw_width, raw_height);
+	auto result = __process_image(raw, raw_width, raw_height);
 	if (!result) {
 		WCHAR temp[256];
 
@@ -77,12 +77,12 @@ GameSprite::~GameSprite() {
 	frames.clear();
 }
 
-void GameSprite::draw(HDC surface, const double dx, const double dy, const UINT index, const double angle, const double xscale, const double yscale) {
+void GameSprite::draw(HDC surface, const double x, const double y, const UINT index, const double angle, const double xscale, const double yscale, const double alpha) {
 	if (1 < number) {
 		auto frame = frames.at(index).get();
-		__draw_single(surface, *frame, dx, dy, angle, xscale, yscale);
+		__draw_single(surface, *frame, x, y, angle, xscale, yscale, alpha);
 	} else {
-		__draw_single(surface, raw, dx, dy, angle, xscale, yscale);
+		__draw_single(surface, raw, x, y, angle, xscale, yscale, alpha);
 	}
 }
 
@@ -154,7 +154,7 @@ bool GameSprite::__process_image(CImage& image, const size_t width, const size_t
 	return true;
 }
 
-void GameSprite::__draw_single(HDC surface, CImage& image, const double dx, const double dy, const double angle, const double xscale, const double yscale) {
+void GameSprite::__draw_single(HDC surface, CImage& image, const double dx, const double dy, const double angle, const double xscale, const double yscale, const double alpha) {
 	if (0.0 != angle) {
 		float cosine = (float)lengthdir_x(1, angle);
 		float sine = (float)lengthdir_y(1, angle);
@@ -176,14 +176,21 @@ void GameSprite::__draw_single(HDC surface, CImage& image, const double dx, cons
 
 		center_x -= xoffset * xscale;
 		center_y -= yoffset * yscale;
-		image.Draw(surface, center_x, center_y, width * abs(xscale), height * abs(yscale), 0, 0, width, height);
+
+		if (alpha != 1.0)
+			image.AlphaBlend(surface, center_x, center_y, width * abs(xscale), height * abs(yscale), 0, 0, width, height, (BYTE)(255 * alpha));
+		else
+			image.Draw(surface, center_x, center_y, width * abs(xscale), height * abs(yscale), 0, 0, width, height);
 
 		Render::transform_set_identity(surface);
 		SetGraphicsMode(surface, nGraphicsMode);
 	} else {
 		int tx = (int)(dx - xoffset * xscale);
 		int ty = (int)(dy - yoffset * yscale);
-
-		image.Draw(surface, tx, ty, width * abs(xscale), height * abs(yscale), 0, 0, width, height);
+		
+		if (alpha != 1.0)
+			image.AlphaBlend(surface, tx, ty, width * abs(xscale), height * abs(yscale), 0, 0, width, height, (BYTE)(255 * alpha));
+		else
+			image.Draw(surface, tx, ty, width * abs(xscale), height * abs(yscale), 0, 0, width, height);
 	}
 }
