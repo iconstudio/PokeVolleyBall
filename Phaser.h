@@ -3,11 +3,11 @@
 
 class Phaser {
 public:
-	Phaser(const float&& duration)
-		: phase(0), ratio(0.0f), time(0.0f), my_size(1), my_durations{ duration } {}
+	Phaser(const double&& duration)
+		: phase(0), ratio(0.0), time(0.0), my_size(1), my_durations{ duration } {}
 
-	Phaser(const std::initializer_list<float>&& durations)
-		: phase(0), ratio(0.0f), time(0.0f), my_size(durations.size()), my_durations(durations) {}
+	Phaser(const std::initializer_list<double>&& durations)
+		: phase(0), ratio(0.0), time(0.0), my_size(durations.size()), my_durations(durations) {}
 
 	void update(float frame_advance) {
 		auto limit = my_durations[phase];
@@ -27,7 +27,7 @@ public:
 		}
 	}
 
-	float get() const {
+	double get() const {
 		return ratio;
 	}
 
@@ -42,8 +42,8 @@ public:
 private:
 	bool done = false;
 	unsigned int phase;
-	float ratio, time;
+	double ratio, time;
 
 	const size_t my_size;
-	const vector<float> my_durations;
+	const vector<double> my_durations;
 };
