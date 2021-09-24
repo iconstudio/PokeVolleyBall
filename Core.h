@@ -4,39 +4,30 @@
 #include "Sprite.h"
 
 
-// 추상 게임 컴포넌트
+// 추상 컴포넌트
 class GameBehavior {
 public:
-	virtual ~GameBehavior() = 0 {};
-
-	virtual void on_create() = 0;
-	virtual void on_destroy() = 0;
-	virtual void on_update(double) = 0;
-	virtual void on_update_later(double) = 0;
-	virtual void on_render(HDC) = 0;
+	virtual ~GameBehavior() {};
+	virtual void on_create() {};
+	virtual void on_destroy() {};
+	virtual void on_update(double) {};
+	virtual void on_update_later(double) {};
+	virtual void on_render(HDC) {};
 };
-
 
 // 추상 개체 컴포넌트
 class GameInstance : public GameBehavior {
 public:
-	const long my_serial = 0L;
-	static constexpr long serial = 0L;
 	using parent = GameBehavior;
 
 	GameInstance(GameScene*, double = 0.0, double = 0.0);
 	virtual ~GameInstance();
+	virtual void on_update_later(double) override; // animation
+	virtual void on_render(HDC) override;
 
 	void sprite_init(shared_ptr<GameSprite>& sprite);
 	void sprite_set(shared_ptr<GameSprite>& sprite);
-	void collision_update();
-	bool collide_with(shared_ptr<GameInstance>& other);
-
-	virtual void on_create() override;
-	virtual void on_destroy() override;
-	virtual void on_update(double) override;
-	virtual void on_update_later(double) override; // animation
-	virtual void on_render(HDC) override;
+	bool collide_with(GameInstance*& other);
 
 	double x, y; // 좌표
 
@@ -54,11 +45,45 @@ class GameScene : public GameBehavior {
 public:
 	using parent = GameBehavior;
 
-	GameScene() : parent(), done(false), instance_garages{} {}
+	GameScene() : parent(), done(false), instances{} {}
 
 	virtual ~GameScene() {
-		//instances.clear();
-		instance_garages.clear();
+		instances.clear();
+	}
+
+	void on_create() override {
+		if (!instances.empty()) {
+			for (auto& instance : instances)
+				instance->on_create();
+		}
+	}
+
+	void on_destroy() override {
+		if (!instances.empty()) {
+			for (auto& instance : instances)
+				instance->on_destroy();
+		}
+	}
+
+	void on_update(double frame_advance) override {
+		if (!instances.empty()) {
+			for (auto& instance : instances)
+				instance->on_update(frame_advance);
+		}
+	}
+
+	void on_update_later(double frame_advance) override {
+		if (!instances.empty()) {
+			for (auto& instance : instances)
+				instance->on_update_later(frame_advance);
+		}
+	}
+
+	void on_render(HDC canvas) override {
+		if (!instances.empty()) {
+			for (auto& instance : instances)
+				instance->on_render(canvas);
+		}
 	}
 
 	template<class _GObj>
@@ -66,98 +91,27 @@ public:
 		auto lptr = new _GObj(this, x, y);
 		lptr->room = this;
 
-		auto loc = lptr->my_serial;
-		auto rptr = shared_ptr<GameInstance>(lptr);
-		instance_garages.emplace(loc, rptr);
+		instances.push_back(shared_ptr<GameInstance>(lptr));
 
 		return lptr;
 	}
 
-	// 모든 인스턴스에서 참조
-	auto instance_id(const size_t index) {
-		auto it = instance_garages.begin();
-		for (size_t i = 0; i < index; ++i) {
-			++it;
-		}
-
-		return (it->second);
-	}
-
-	// 특정한 종류의 인스턴스만 참조
 	template<class _GObj>
-	auto instance_seek(const size_t index) -> GameInstance* {
-		var ranges = instance_garages.equal_range(_GObj::serial);
-		var first = ranges.first;
-		var second = ranges.second;
+	inline void instance_kill(_GObj* target) {
+		auto loc = find_if(instances.begin(), instances.end(), [target](shared_ptr<GameInstance>& lhs) {
+			return (lhs.get() == target);
+		});
 
-		if (first != instance_garages.end()) {
-			if (0 < index) {
-				for (int i = 0; i < index; ++i) {
-					++first;
-				}
-			}
-			return ((first->second).get());
-		} else {
-			return nullptr;
-		}
-		//*/
-	}
-
-	void on_create() override {
-		if (!instance_garages.empty()) {
-			for (const auto& instance : instance_garages)
-				instance.second->on_create();
-		}
-	}
-
-	void on_destroy() override {
-		if (!instance_garages.empty()) {
-			for (const auto& instance : instance_garages)
-				instance.second->on_destroy();
-		}
-	}
-
-	void on_update(double frame_advance) override {
-		if (!instance_garages.empty()) {
-			for (const auto& instance : instance_garages)
-				instance.second->on_update(frame_advance);
-		}
-	}
-
-	void on_update_later(double frame_advance) override {
-		if (!instance_garages.empty()) {
-			for (const auto& instance : instance_garages)
-				instance.second->on_update_later(frame_advance);
-		}
-	}
-
-	void on_render(HDC canvas) override {
-		if (!instance_garages.empty()) {
-			for (const auto& instance : instance_garages)
-				instance.second->on_render(canvas);
+		if (loc != instances.end()) {
+			instances.erase(loc);
 		}
 	}
 
 	friend class GameInstance;
-
 	bool done;
 
 private:
-	template<class _GObj>
-	void instance_install(_GObj* target) {
-		var loc = target->my_serial;
-		instance_garages.emplace(loc, shared_ptr<GameInstance>(target));
-	}
 
-	template<class _GObj>
-	void instance_uninstall(_GObj* target) {
-		var loc = target->my_serial;
-		var erloc = instance_garages.find(loc);
-
-		instance_garages.erase(erloc);
-	}
-
-	//vector<shared_ptr<GameInstance>> instances;
-	multimap<long, shared_ptr<GameInstance>> instance_garages;
-	using instances_iterator = multimap<long, shared_ptr<GameInstance>>::iterator;
+	vector<shared_ptr<GameInstance>> instances;
+	//multimap<long, shared_ptr<GameInstance>> instance_garages;
 };

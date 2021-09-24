@@ -16,10 +16,16 @@ WindowsClient game_client{ RESOLUTION_W, RESOLUTION_H };	// 클라이언트 객�
 GameFramework game_framework;
 
 auto SPRITE_LOGO = game_framework.make_sprite(TEXT("res\\kpu2x.png"), 1, 320, 240);
+auto SPRITE_TITLE = game_framework.make_sprite(TEXT("res\\title.png"), 1, 160, 120);
 auto SPRITE_BALL = game_framework.make_sprite(TEXT("res\\ball.png"), 1, 32, 32);
 auto SPRITE_PIKA = game_framework.make_sprite(TEXT("res\\bigpikaboth_strip2.png"), 2, 40, 40);
 auto SPRITE_PIKAWALK_L = game_framework.make_sprite(TEXT("res\\bigpikawalk_strip4.png"), 4, 40, 40);
 auto SPRITE_PIKAWALK_R = game_framework.make_sprite(TEXT("res\\bigpikawalkright_strip4.png"), 4, 40, 40);
+
+auto ROOM_GAME = game_framework.state_push<sceneGame>();
+auto ROOM_INTRO = game_framework.state_push<sceneIntro>();
+auto ROOM_TITLE = game_framework.state_push<sceneTitle>();
+auto ROOM_MAIN = game_framework.state_push<sceneMainMenu>();
 
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -29,28 +35,22 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
-
 	// 전역 문자열을 초기화합니다.
 	LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
 	LoadStringW(hInstance, IDC_POKEVALLEYBALL, szWindowClass, MAX_LOADSTRING);
-
 
 	// 애플리케이션 초기화를 수행합니다:
 	if (!game_client.initialize(hInstance, WndProc, szTitle, szWindowClass, nCmdShow)) {
 		return FALSE;
 	}
 
-
 	// 단축키의 목록을 불러옵니다.
 	HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_POKEVALLEYBALL));
 	MSG msg{};
 
-
 	// 게임 초기화
 	game_framework.init();
 
-	// 사용자 코드입니다:
-	game_framework.input_register(VK_ESCAPE); // 나가기 및 취소
 	game_framework.input_register(VK_RETURN); // 확인
 	game_framework.input_register(VK_SPACE); // 점프 및 확인
 
@@ -67,15 +67,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 	game_framework.input_register(VK_F2); // 게임 전체 다시 시작
 	game_framework.input_register(VK_F3); // 현재 장면만 다시 시작
 
-
-	game_framework.state_push<sceneIntro>();
-	game_framework.state_push<sceneGame>();
-
-
 	// 게임 빌드
 	game_framework.build();
 
-	// 기본 메시지 루프입니다:
+	// 메시지 루프:
 	bool done = false;
 
 	while (true) {
@@ -244,21 +239,14 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam) {
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 void sceneIntro::on_create() {
-	parent::on_create();
-
-	logo = game_framework.find_sprite(SPRITE_LOGO);
+	sprite_index = game_framework.find_sprite(SPRITE_LOGO);
 }
 
 void sceneIntro::on_destroy() {
-	parent::on_destroy();
-
-	logo->~GameSprite();
-	logo.reset();
+	sprite_index.reset();
 }
 
 void sceneIntro::on_update(double frame_advance) {
-	parent::on_update(frame_advance);
-
 	state.update(frame_advance);
 
 	auto phase = state.get_phase();
@@ -273,6 +261,12 @@ void sceneIntro::on_update(double frame_advance) {
 
 		case 1: // 그리기
 		{
+			bool check_enter = game_framework.input_check(VK_RETURN) || game_framework.input_check(VK_SPACE);
+
+			if (check_enter) {
+				state.skip();
+			}
+
 			alpha = 1.0;
 		}
 		break;
@@ -293,24 +287,36 @@ void sceneIntro::on_update(double frame_advance) {
 }
 
 void sceneIntro::on_render(HDC canvas) {
-	parent::on_render(canvas);
+	sprite_index->draw(canvas, x, y, 0, 0, 1, 1, alpha);
+}
 
-	logo->draw(canvas, 320, 240, 0, 0, 1, 1, alpha);
+void sceneTitle::on_create() {
+	sprite_index = game_framework.find_sprite(SPRITE_TITLE);
+}
+
+void sceneTitle::on_destroy() {
+	sprite_index.reset();
+}
+
+void sceneTitle::on_update(double frame_advance) {
+	bool check_enter = game_framework.input_check(VK_RETURN) || game_framework.input_check(VK_SPACE);
+
+}
+
+void sceneTitle::on_render(HDC canvas) {
+	sprite_index->draw(canvas, x, y, 0, 0, 1, 1, 1);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
-
-sceneGame::sceneGame()
-	: turn(TURN::player), ball(nullptr), player(nullptr), enemy(nullptr) {
-}
 
 void sceneGame::on_create() {
 	ball = instance_create<oVolleyBall>(BALL_PLAYER_X_START, BALL_PLAYER_Y_START);
 	player = instance_create<oPlayerPoke>(PIKA_X_START_PLAYER, PIKA_Y_START);
 	enemy = instance_create<oEnemyPoke>(PIKA_X_START_ENEMY, PIKA_Y_START);
 
-	player->ball = shared_ptr<oVolleyBall>(ball);
-	enemy->ball = shared_ptr<oVolleyBall>(ball);
+	turn = TURN::player;
+	player->ball = ball;
+	enemy->ball = ball;
 
 	parent::on_create();
 }
@@ -329,7 +335,6 @@ void sceneGame::on_update_later(double frame_advance) {
 
 void sceneGame::on_render(HDC canvas) {
 	parent::on_render(canvas);
-
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -350,16 +355,21 @@ void oGraviton::on_update(double frame_advance) {
 	auto yspeed = km_per_hr(vspeed) * frame_advance;
 
 	if (vspeed < 0) {
-		y += yspeed;
+		move(0, yspeed);
 	} else {
 		checky = y + box.bottom + yspeed + 1;
 
 		if (checky < GROUND_Y) {
-			y += yspeed;
+			move(0, yspeed);
 		} else {
 			thud();
 		}
 	}
+}
+
+void oGraviton::move(const double mx, const double my) {
+	x += mx;
+	y += my;
 }
 
 void oGraviton::jump(double power) {
@@ -367,7 +377,7 @@ void oGraviton::jump(double power) {
 }
 
 void oGraviton::contact() {
-	y = (double)(GROUND_Y - box.bottom - 1.0);
+	y = (GROUND_Y - box.bottom - 1.0);
 }
 
 void oGraviton::thud() {
@@ -384,58 +394,57 @@ oVolleyBall::oVolleyBall(GameScene* nclan, double nx, double ny)
 	vbounce = 0.5;
 }
 
-oPokemon::oPokemon(GameScene* nclan, double nx, double ny)
+oPikachu::oPikachu(GameScene* nclan, double nx, double ny)
 	: parent(nclan, nx, ny), jumping(false), sliding(false), blinking(false)
 	, stamina(PIKA_STAMINA_MAX), wake_time(0.0) {
 	look_at(LOOKDIR::RIGHT);
-	image_speed = 0.3;
+	image_speed = 0.0;
 }
 
-oPokemon::~oPokemon() {
-	if (ball)
-		ball.reset();
-}
-
-void oPokemon::on_create() {
-}
-
-void oPokemon::on_update(double frame_advance) {
+void oPikachu::on_update(double frame_advance) {
 	parent::on_update(frame_advance);
 
 	auto xspeed = km_per_hr(hspeed) * frame_advance;
-
 	if (xspeed != 0.0) {
 		if (xspeed < 0) { // 왼쪽 이동
 			auto checkx = x + box.left + xspeed - 1;
 
 			if (checkx < x_min) {
-				if (sliding && FENCE_APGUREUGI_BOUNCE_MIN_XVELOCITY <= -hspeed) { // 구르기 중에 벽에 닿으면 팅긴다.
-					auto gabx = abs(x - x_min);
+				if (is_blinking()) {
+					// 전광석화 중에 벽에 닿으면 바로 끝난다.
+					set_flag_blink(false);
 					x = x_min - box.left;
-					//x += abs(gabx + xspeed); // 남은 비거리 동안 반대쪽으로 이동
+					hspeed = 0; // 정지
+				} else if (is_rolling() && FENCE_APGUREUGI_BOUNCE_MIN_XVELOCITY <= -hspeed) {
+					// 구르기 중에 벽에 닿으면 팅긴다.
+					x = x_min - box.left;
 					hspeed *= -1; // 속도 역시 반대쪽으로 팅김
 				} else {
 					x = x_min - box.left;
 					hspeed = 0; // 정지
 				}
 			} else {
-				x += xspeed;
+				move(xspeed, 0);
 			}
 		} else { // 오른쪽 이동
 			auto checkx = x + box.right + xspeed + 1;
 
 			if (x_max < checkx) {
-				if (sliding && FENCE_APGUREUGI_BOUNCE_MIN_XVELOCITY <= hspeed) { // 구르기 중에 벽에 닿으면 팅긴다.
-					auto gabx = abs(x_max - x);
+				if (is_blinking()) {
+					// 전광석화 중에 벽에 닿으면 바로 끝난다.
+					set_flag_blink(false);
+					x = x_min - box.left;
+					hspeed = 0; // 정지
+				} else if (is_rolling() && FENCE_APGUREUGI_BOUNCE_MIN_XVELOCITY <= hspeed) {
+					// 구르기 중에 벽에 닿으면 팅긴다.
 					x = x_max - box.right;
-					//x += abs(gabx - xspeed); // 남은 비거리 동안 반대쪽으로 이동
 					hspeed *= -1; // 속도 역시 반대쪽으로 팅김
 				} else {
 					x = x_max - box.right;
 					hspeed = 0; // 정지
 				}
 			} else {
-				x += xspeed;
+				move(xspeed, 0);
 			}
 		}
 	}
@@ -449,7 +458,7 @@ void oPokemon::on_update(double frame_advance) {
 	}
 }
 
-void oPokemon::move(int direction, double frame_advance) {
+void oPikachu::walk(int direction, double frame_advance) {
 	if (direction < 0) { // 왼쪽
 		if (hspeed < 0) {
 			if (-PIKA_MOVE_XVELOCITY < hspeed) {
@@ -471,50 +480,16 @@ void oPokemon::move(int direction, double frame_advance) {
 			hspeed += PIKA_MOVE_XACCEL;
 		}
 	}
-	//x += PIKA_MOVE_XVELOCITY * frame_advance * direction;
 }
 
-void oPokemon::jump(double power) {
+void oPikachu::jump(double power) {
 	parent::jump(power);
 
-	jumping = true;
+	set_flag_jump(true);
 }
 
-bool oPokemon::can_action() {
-	return (wake_time <= 0);
-}
-
-bool oPokemon::can_rollingforward() {
-	return (STAMINA_SPEND_APGUREUGI <= stamina && can_action());
-}
-
-bool oPokemon::can_blink() {
-	return (STAMINA_SPEND_BLINK <= stamina && can_action());
-}
-
-void oPokemon::rollingforward() {
-	sliding = true;
-
-	hspeed = PIKA_APGUREUGI_XVELOCITY * (int)dir;
-	stamina -= STAMINA_SPEND_APGUREUGI;
-	gravity = PIKA_APGUREUGI_GRAVITY;
-	jump(PIKA_APGUREUGI_YVELOCITY);
-}
-
-void oPokemon::blink() {
-
-}
-
-void oPokemon::thud_recover() {
-	wake_time = PIKA_APGUREUGI_REBOUND_DURATION;
-}
-
-void oPokemon::blink_recover() {
-
-}
-
-void oPokemon::thud() {
-	if (sliding) { // 구르기 먼저 판정
+void oPikachu::thud() {
+	if (is_rolling()) { // 구르기 먼저 판정
 		if (PIKA_APGUREUGI_BOUNCE_STD_YVELOCITY < vspeed) { // 높이 뛰면 살짝 튕긴다.
 			contact();
 
@@ -522,25 +497,103 @@ void oPokemon::thud() {
 			jump(PIKA_APGUREUGI_BOUNCE_YVELOCITY);
 		} else { // 그렇지 않으면 땅에 착지한다.
 			parent::thud();
-			sliding = false;
+			set_flag_jump(false);
+			set_flag_roll(false);
 
 			hspeed = 0.0;
 			gravity = GRAVITY;
-			jumping = false;
-			thud_recover();
+			rolling_recover();
 		}
-	} else if (jumping) {
+	} else if (is_jumping()) {
 		parent::thud();
-		jumping = false;
+		set_flag_jump(false);
 	}
 }
 
-void oPokemon::look_at(LOOKDIR direction) {
+void oPikachu::set_flag_jump(bool flag) {
+	jumping = flag;
+}
+
+void oPikachu::set_flag_roll(bool flag) {
+	sliding = flag;
+}
+
+void oPikachu::set_flag_blink(bool flag) {
+	blinking = flag;
+}
+
+bool oPikachu::can_action() const {
+	return (wake_time <= 0 && !is_acting());
+}
+
+bool oPikachu::can_move() const {
+	return (can_action());
+}
+
+bool oPikachu::can_jump() const {
+	return (can_action() && !is_jumping());
+}
+
+bool oPikachu::can_smash() const {
+	return (!is_acting());
+}
+
+bool oPikachu::can_rollingforward() const {
+	return (STAMINA_SPEND_APGUREUGI <= stamina && can_action() && !is_jumping());
+}
+
+bool oPikachu::can_blink() const {
+	return (STAMINA_SPEND_BLINK <= stamina && can_action());
+}
+
+void oPikachu::rollingforward() {
+	set_flag_roll(true);
+
+	hspeed = PIKA_APGUREUGI_XVELOCITY * (int)dir;
+	stamina -= STAMINA_SPEND_APGUREUGI;
+	gravity = PIKA_APGUREUGI_GRAVITY;
+	jump(PIKA_APGUREUGI_YVELOCITY);
+}
+
+void oPikachu::blink() {
+	set_flag_blink(true);
+}
+
+void oPikachu::rolling_recover() {
+	wake_time = PIKA_APGUREUGI_REBOUND_DURATION;
+}
+
+void oPikachu::blink_recover() {
+	wake_time = PIKA_APGUREUGI_REBOUND_DURATION;
+}
+
+bool oPikachu::is_acting() const {
+	return sliding || blinking;
+}
+
+bool oPikachu::is_jumping() const {
+	return jumping;
+}
+
+bool oPikachu::is_rolling() const {
+	return sliding;
+}
+
+bool oPikachu::is_blinking() const {
+	return blinking;
+}
+
+void oPikachu::look_at(LOOKDIR direction) {
 	dir = direction;
 	if (direction == LOOKDIR::LEFT)
 		image_index = 0.0;
 	else
 		image_index = 1.0;
+}
+
+void oPikachu::set_xborder(const double min, const double max) {
+	x_min = min;
+	x_max = max;
 }
 
 // 플레이어
@@ -549,8 +602,7 @@ oPlayerPoke::oPlayerPoke(GameScene* nclan, double nx, double ny)
 	auto sprite = game_framework.find_sprite(SPRITE_PIKA);
 	sprite_init(sprite);
 	look_at(LOOKDIR::RIGHT);
-	x_min = PLAYER_X_MIN;
-	x_max = PLAYER_X_MAX;
+	set_xborder(PLAYER_X_MIN, PLAYER_X_MAX);
 }
 
 // 플레이어 동작
@@ -562,45 +614,56 @@ void oPlayerPoke::on_update(double frame_advance) {
 	int check_up = game_framework.input_check(VK_UP);
 	int check_down = game_framework.input_check(VK_DOWN);
 
+	bool check_jump = game_framework.input_check(VK_SPACE);
+	bool check_smash = game_framework.input_check(VK_CHAR_Z);
+	bool check_rolling = game_framework.input_check(VK_CHAR_X);
+	bool check_blink = game_framework.input_check(VK_CHAR_C);
+
 	int check_hor = (check_right - check_left);
 
-	if (!sliding) {
-		if (can_action() && check_hor != 0) {
-			move(check_hor, frame_advance);
-			look_at((LOOKDIR)check_hor);
-		} else {
-			hspeed *= 0.2;
-		}
+	if (check_hor != 0 && can_move()) {
+		walk(check_hor, frame_advance);
+		look_at((LOOKDIR)check_hor);
+	} else if (!is_acting()) {
+		hspeed *= 0.2;
+	}
 
-		if (can_action() && !jumping) {
-			if (game_framework.input_check(VK_CHAR_X)) { // 점프
-				jump(PIKA_JUMP_VELOCITY);
-			} else if (can_rollingforward() && game_framework.input_check(VK_CHAR_C)) { // 앞구르기
-				rollingforward();
-			}
-		}
-	} else {
+	bool ask_jump = check_jump && can_jump();
+	bool ask_smash = check_smash && can_smash();
+	bool ask_roll = check_rolling && can_rollingforward();
+	bool ask_blink = check_blink && can_blink();
 
+	if (ask_blink) { // 전광석화
+		blink();
+	} else if (ask_roll) { // 앞구르기
+		rollingforward();
+	} else if (ask_jump) { // 점프
+		jump(PIKA_JUMP_VELOCITY);
 	}
 
 	// 공과 충돌했을 때만 기술을 사용할 수 있다.
 	auto collide_with_ball = collide_with(ball);
-	if (collide_with_ball) {
+	if (ask_smash && collide_with_ball) { // 스매시
 
 	}
 }
 
-// 적 초기화
 oEnemyPoke::oEnemyPoke(GameScene* nclan, double nx, double ny)
 	: parent(nclan, nx, ny) {
 	auto sprite = game_framework.find_sprite(SPRITE_PIKA);
 	sprite_init(sprite);
 	look_at(LOOKDIR::LEFT);
-	x_min = ENEMY_X_MIN;
-	x_max = ENEMY_X_MAX;
+	set_xborder(ENEMY_X_MIN, ENEMY_X_MAX);
 }
 
-// 적 인공지능
 void oEnemyPoke::on_update(double frame_advance) {
 	parent::on_update(frame_advance);
 }
+
+void sceneMainMenu::on_create() {}
+
+void sceneMainMenu::on_destroy() {}
+
+void sceneMainMenu::on_update(double frame_advance) {}
+
+void sceneMainMenu::on_render(HDC canvas) {}

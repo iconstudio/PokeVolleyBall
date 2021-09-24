@@ -9,7 +9,7 @@ GameInstance::GameInstance(GameScene* nclan, double nx, double ny)
 
 GameInstance::~GameInstance() {
 	if (room) {
-		room->instance_uninstall(this);
+		room->instance_kill(this);
 		room = nullptr;
 	}
 	if (sprite_index)
@@ -26,14 +26,8 @@ void GameInstance::sprite_set(shared_ptr<GameSprite>& sprite) {
 	image_index = 0.0;
 }
 
-void GameInstance::collision_update() {
-	if (sprite_index) {
-		//RectInRegion
-	}
-}
-
-bool GameInstance::collide_with(shared_ptr<GameInstance>& other) {
-	if (sprite_index && other->sprite_index) {
+bool GameInstance::collide_with(GameInstance*& other) {
+	if (sprite_index && other && other->sprite_index) {
 		auto& otherbox = other->box;
 		OffsetRect(&otherbox, other->x, other->y);
 		OffsetRect(&box, x, y);
@@ -49,12 +43,6 @@ bool GameInstance::collide_with(shared_ptr<GameInstance>& other) {
 
 	return false;
 }
-
-void GameInstance::on_create() {}
-
-void GameInstance::on_destroy() {}
-
-void GameInstance::on_update(double frame_advance) {}
 
 void GameInstance::on_update_later(double frame_advance) {
 	if (sprite_index) {

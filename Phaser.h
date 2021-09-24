@@ -18,12 +18,19 @@ public:
 			if (limit < time)
 				time = limit;
 		} else if (phase < my_size - 1) {
-			ratio = 0.0f;
-			time = 0.0f;
+			ratio = 0.0;
+			time = 0.0;
 			phase++;
 		} else {
-			ratio = 1.0f;
+			ratio = 1.0;
 			done = true;
+		}
+	}
+
+	void skip() {
+		if (!done) {
+			ratio = 1.0;
+			time = my_durations[phase];
 		}
 	}
 

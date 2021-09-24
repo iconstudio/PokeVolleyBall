@@ -20,7 +20,6 @@ typedef LRESULT(CALLBACK* WindowProcedure)(HWND, UINT, WPARAM, LPARAM);
 #define RESOLUTION_W 640 // 창 너비
 #define RESOLUTION_H 480 // 창 높이
 
-class GameCamera;
 class GameInput;
 class GameFramework;
 class GameSprite;
@@ -40,7 +39,7 @@ class GameInstance;
 class oSolid;
 class oGraviton;
 class oVolleyBall;
-class oPokemon;
+class oPikachu;
 class oPlayerPoke;
 class oEnemyPoke;
 
