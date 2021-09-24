@@ -22,8 +22,8 @@ auto SPRITE_PIKA = game_framework.make_sprite(TEXT("res\\bigpikaboth_strip2.png"
 auto SPRITE_PIKAWALK_L = game_framework.make_sprite(TEXT("res\\bigpikawalk_strip4.png"), 4, 40, 40);
 auto SPRITE_PIKAWALK_R = game_framework.make_sprite(TEXT("res\\bigpikawalkright_strip4.png"), 4, 40, 40);
 
-auto ROOM_GAME = game_framework.state_push<sceneGame>();
 auto ROOM_INTRO = game_framework.state_push<sceneIntro>();
+auto ROOM_GAME = game_framework.state_push<sceneGame>();
 auto ROOM_TITLE = game_framework.state_push<sceneTitle>();
 auto ROOM_MAIN = game_framework.state_push<sceneMainMenu>();
 

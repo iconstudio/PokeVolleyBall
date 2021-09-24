@@ -14,46 +14,46 @@
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
 INT_PTR CALLBACK About(HWND, UINT, WPARAM, LPARAM);
 
-const LONG GROUND_Y = RESOLUTION_H - 100; // 접지 좌표
-const double GRAVITY = 6.0; // 시간 당 미터 이동거리
+constexpr LONG GROUND_Y = RESOLUTION_H - 100; // 접지 좌표
+constexpr double GRAVITY = 6.0; // 시간 당 미터 이동거리
 
-const double PIKA_X_START_PLAYER = RESOLUTION_W * 0.3; // 플레이어 시작 x 좌표
-const double PIKA_X_START_ENEMY = RESOLUTION_W * 0.7; // 상대 시작 x 좌표
-const double PIKA_Y_START = GROUND_Y - 30.; // 공통 시작 y 좌표
+constexpr double PIKA_X_START_PLAYER = RESOLUTION_W * 0.3; // 플레이어 시작 x 좌표
+constexpr double PIKA_X_START_ENEMY = RESOLUTION_W * 0.7; // 상대 시작 x 좌표
+constexpr double PIKA_Y_START = GROUND_Y - 30.; // 공통 시작 y 좌표
 
-const double BALL_PLAYER_X_START = PIKA_X_START_PLAYER; // 플레이어 서브의 공 시작 x 좌표
-const double BALL_PLAYER_Y_START = PIKA_Y_START - 200.; // 플레이어 서브의 공 시작 y 좌표
-const double BALL_ENEMY_X_START = PIKA_X_START_ENEMY; // 적 서브의 공 시작 x 좌표
-const double BALL_ENEMY_Y_START = PIKA_Y_START - 200.; // 적 서브의 공 시작 y 좌표
+constexpr double BALL_PLAYER_X_START = PIKA_X_START_PLAYER; // 플레이어 서브의 공 시작 x 좌표
+constexpr double BALL_PLAYER_Y_START = PIKA_Y_START - 200.; // 플레이어 서브의 공 시작 y 좌표
+constexpr double BALL_ENEMY_X_START = PIKA_X_START_ENEMY; // 적 서브의 공 시작 x 좌표
+constexpr double BALL_ENEMY_Y_START = PIKA_Y_START - 200.; // 적 서브의 공 시작 y 좌표
 
-const double FENCE_X_LEFT = RESOLUTION_W * 0.5 - 8.0; // 가운데 네트의 좌측 경계
-const double FENCE_X_RIGHT = RESOLUTION_W * 0.5 + 8.0; // 가운데 네트의 우측 경계
-const double PLAYER_X_MIN = 10.0;
-const double PLAYER_X_MAX = FENCE_X_LEFT;
-const double ENEMY_X_MIN = FENCE_X_RIGHT;
-const double ENEMY_X_MAX = RESOLUTION_W - 10.0;
-const double FENCE_APGUREUGI_BOUNCE_MIN_XVELOCITY = 8.; // 앞구르기 할때 벽에 닿으면 팅겨낼 속도의 최소값
-const double FIELD_SIZE = PLAYER_X_MAX - PLAYER_X_MIN; // 플레이어가 다닐 수 있는 땅의 너비
+constexpr double FENCE_X_LEFT = RESOLUTION_W * 0.5 - 8.0; // 가운데 네트의 좌측 경계
+constexpr double FENCE_X_RIGHT = RESOLUTION_W * 0.5 + 8.0; // 가운데 네트의 우측 경계
+constexpr double PLAYER_X_MIN = 10.0;
+constexpr double PLAYER_X_MAX = FENCE_X_LEFT;
+constexpr double ENEMY_X_MIN = FENCE_X_RIGHT;
+constexpr double ENEMY_X_MAX = RESOLUTION_W - 10.0;
+constexpr double FENCE_APGUREUGI_BOUNCE_MIN_XVELOCITY = 8.; // 앞구르기 할때 벽에 닿으면 팅겨낼 속도의 최소값
+constexpr double FIELD_SIZE = PLAYER_X_MAX - PLAYER_X_MIN; // 플레이어가 다닐 수 있는 땅의 너비
 
-const double PIKA_MOVE_XACCEL = 4.; // 피카츄 좌우 가속도
-const double PIKA_MOVE_XVELOCITY = 25.; // 피카츄 좌우 이동 속도
-const double PIKA_JUMP_VELOCITY = 140.; // 피카츄 점프 속도
+constexpr double PIKA_MOVE_XACCEL = 4.; // 피카츄 좌우 가속도
+constexpr double PIKA_MOVE_XVELOCITY = 25.; // 피카츄 좌우 이동 속도
+constexpr double PIKA_JUMP_VELOCITY = 140.; // 피카츄 점프 속도
 
-const double PIKA_APGUREUGI_GRAVITY = 1.1; // 앞구르기 할때 바뀌는 중력
-const double PIKA_APGUREUGI_XVELOCITY = 40.; // 앞구르기 전진 속도
-const double PIKA_APGUREUGI_YVELOCITY = 11.; // 앞구르기 뛰기 속도
-const double PIKA_APGUREUGI_BOUNCE_YVELOCITY = 6.;
-const double PIKA_APGUREUGI_BOUNCE_STD_YVELOCITY = 7.;
-const double PIKA_APGUREUGI_REBOUND_DURATION = 0.26; // 앞구르기 낙법 후 회복 시간
+constexpr double PIKA_APGUREUGI_GRAVITY = 1.1; // 앞구르기 할때 바뀌는 중력
+constexpr double PIKA_APGUREUGI_XVELOCITY = 40.; // 앞구르기 전진 속도
+constexpr double PIKA_APGUREUGI_YVELOCITY = 11.; // 앞구르기 뛰기 속도
+constexpr double PIKA_APGUREUGI_BOUNCE_YVELOCITY = 6.;
+constexpr double PIKA_APGUREUGI_BOUNCE_STD_YVELOCITY = 7.;
+constexpr double PIKA_APGUREUGI_REBOUND_DURATION = 0.26; // 앞구르기 낙법 후 회복 시간
 
-const double PIKA_BLINK_DISTANCE = FIELD_SIZE * 0.5; // 전광석화 거리
+constexpr double PIKA_BLINK_DISTANCE = FIELD_SIZE * 0.5; // 전광석화 거리
+constexpr double PIKA_BLINK_DURATION = 0.2; // 전광석화 소요 시간
+constexpr double PIKA_BLINK_VELOCITY = PIKA_BLINK_DISTANCE / PIKA_BLINK_DURATION;
+constexpr double PIKA_BLINK_REBOUND_DURATION = 0.45; // 전광석화 후 회복 시간
 
-const double PIKA_BLINK_DURATION = 0.2; // 전광석화 소요 시간
-const double PIKA_BLINK_REBOUND_DURATION = 0.45; // 전광석화 후 회복 시간
-
-const double PIKA_STAMINA_MAX = 15.0; // 최대 체력 (시간)
-const double STAMINA_SPEND_APGUREUGI = 3.5; // 앞구르기의 소모 체력 (시간)
-const double STAMINA_SPEND_BLINK = 5.5; // 전광석화의 소모 체력 (시간)
+constexpr double PIKA_STAMINA_MAX = 15.0; // 최대 체력 (시간)
+constexpr double STAMINA_SPEND_APGUREUGI = 3.5; // 앞구르기의 소모 체력 (시간)
+constexpr double STAMINA_SPEND_BLINK = 5.5; // 전광석화의 소모 체력 (시간)
 
 enum class LOOKDIR : int { LEFT = -1, RIGHT = 1 };
 enum class TURN { player, enemy };
