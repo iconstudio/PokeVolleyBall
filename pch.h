@@ -17,8 +17,8 @@ typedef LRESULT(CALLBACK* WindowProcedure)(HWND, UINT, WPARAM, LPARAM);
 #define sign(_x) ((_x > 0) ? 1 : ((_x == 0) ? 0 : -1))
 #define var auto
 
-#define RESOLUTION_W 640 // 창 너비
-#define RESOLUTION_H 480 // 창 높이
+#define RESOLUTION_W 960 // 창 너비
+#define RESOLUTION_H 540 // 창 높이
 
 class GameInput;
 class GameFramework;

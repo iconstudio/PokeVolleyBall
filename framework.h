@@ -10,18 +10,14 @@ public:
 
 	void input_register(const WPARAM virtual_button);
 	bool input_check(const WPARAM virtual_button);
-	//bool input_check_pressed(int button);
-	//bool input_check_released(int button);
+	bool input_check_pressed(const WPARAM virtual_button);
 
 	void init();
-	void build(); // 장면을 불러옵니다.
+	void build();
 	bool update();
-	void quit();
 
 	void delta_start();
 	void delta_inspect();
-
-	// 지난 실제 시간을 구합니다.
 	double get_elapsed_second() const;
 
 	size_t make_sprite(HINSTANCE instance, const UINT resource, const UINT number, const int xoff, const int yoff);
@@ -40,7 +36,6 @@ public:
 
 	template<class GScene>
 	size_t state_push() {
-		auto room = new GScene();
 		states.push_back(new GScene());
 
 		return states.size() - 1;
@@ -52,8 +47,6 @@ public:
 	void state_jump(const INT);
 	void state_jump_next();
 
-	friend LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
-
 	GameScene* state_id; // 현재 상태 포인터
 	INT state_handle = 0; // 현재 상태의 위치 번호
 
@@ -61,9 +54,12 @@ public:
 private:
 	class GameInput {
 	public:
-		bool pressed = false; // 누름
-		bool released = false; // 뗌
-		bool pressing = false; // 누르는 중
+		double time = -1.0;
+
+		void on_press() { time += 1.0; }
+		void on_release() { time = -1.0; }
+		bool is_pressing() const { return (0 <= time); }
+		bool is_pressed() const { return (0 == time); }
 	};
 
 	using tick_type = std::chrono::microseconds;

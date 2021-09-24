@@ -22,6 +22,10 @@ auto SPRITE_PIKA = game_framework.make_sprite(TEXT("res\\bigpikaboth_strip2.png"
 auto SPRITE_PIKAWALK_L = game_framework.make_sprite(TEXT("res\\bigpikawalk_strip4.png"), 4, 40, 40);
 auto SPRITE_PIKAWALK_R = game_framework.make_sprite(TEXT("res\\bigpikawalkright_strip4.png"), 4, 40, 40);
 
+// 출처: https://twitter.com/yuukimokuya/status/1292847226784374785
+auto SPRITE_BG = game_framework.make_sprite(TEXT("res\\beach.png"), 1, 600, 0);
+
+
 auto ROOM_INTRO = game_framework.state_push<sceneIntro>();
 auto ROOM_GAME = game_framework.state_push<sceneGame>();
 auto ROOM_TITLE = game_framework.state_push<sceneTitle>();
@@ -396,13 +400,21 @@ oVolleyBall::oVolleyBall(GameScene* nclan, double nx, double ny)
 
 oPikachu::oPikachu(GameScene* nclan, double nx, double ny)
 	: parent(nclan, nx, ny), jumping(false), sliding(false), blinking(false)
-	, stamina(PIKA_STAMINA_MAX), wake_time(0.0) {
+	, stamina(PIKA_STAMINA_MAX), wake_time(0.0), blink_time(0.0) {
 	look_at(LOOKDIR::RIGHT);
 	image_speed = 0.0;
 }
 
 void oPikachu::on_update(double frame_advance) {
 	parent::on_update(frame_advance);
+
+	if (is_blinking()) {
+		if (blink_time < PIKA_BLINK_DURATION) {
+			blink_time += frame_advance;
+		} else {
+			blink_recover();
+		}
+	}
 
 	auto xspeed = km_per_hr(hspeed) * frame_advance;
 	if (xspeed != 0.0) {
@@ -412,9 +424,8 @@ void oPikachu::on_update(double frame_advance) {
 			if (checkx < x_min) {
 				if (is_blinking()) {
 					// 전광석화 중에 벽에 닿으면 바로 끝난다.
-					set_flag_blink(false);
+					blink_recover();
 					x = x_min - box.left;
-					hspeed = 0; // 정지
 				} else if (is_rolling() && FENCE_APGUREUGI_BOUNCE_MIN_XVELOCITY <= -hspeed) {
 					// 구르기 중에 벽에 닿으면 팅긴다.
 					x = x_min - box.left;
@@ -432,9 +443,8 @@ void oPikachu::on_update(double frame_advance) {
 			if (x_max < checkx) {
 				if (is_blinking()) {
 					// 전광석화 중에 벽에 닿으면 바로 끝난다.
-					set_flag_blink(false);
-					x = x_min - box.left;
-					hspeed = 0; // 정지
+					blink_recover();
+					x = x_max - box.right;
 				} else if (is_rolling() && FENCE_APGUREUGI_BOUNCE_MIN_XVELOCITY <= hspeed) {
 					// 구르기 중에 벽에 닿으면 팅긴다.
 					x = x_max - box.right;
@@ -498,7 +508,6 @@ void oPikachu::thud() {
 		} else { // 그렇지 않으면 땅에 착지한다.
 			parent::thud();
 			set_flag_jump(false);
-			set_flag_roll(false);
 
 			hspeed = 0.0;
 			gravity = GRAVITY;
@@ -557,14 +566,25 @@ void oPikachu::rollingforward() {
 
 void oPikachu::blink() {
 	set_flag_blink(true);
+
+	hspeed = PIKA_BLINK_VELOCITY * (int)dir;
+	stamina -= STAMINA_SPEND_BLINK;
+	blink_time = 0;
+	gravity = 0;
 }
 
 void oPikachu::rolling_recover() {
+	set_flag_roll(false);
+
 	wake_time = PIKA_APGUREUGI_REBOUND_DURATION;
 }
 
 void oPikachu::blink_recover() {
-	wake_time = PIKA_APGUREUGI_REBOUND_DURATION;
+	set_flag_blink(false);
+
+	hspeed = PIKA_BLINK_REBOUND_VELOCITY * (int)dir;
+	wake_time = PIKA_BLINK_REBOUND_DURATION;
+	gravity = GRAVITY;
 }
 
 bool oPikachu::is_acting() const {
@@ -609,22 +629,25 @@ oPlayerPoke::oPlayerPoke(GameScene* nclan, double nx, double ny)
 void oPlayerPoke::on_update(double frame_advance) {
 	parent::on_update(frame_advance);
 
+	if (is_acting()) {
+		return;
+	}
+
 	int check_left = game_framework.input_check(VK_LEFT);
 	int check_right = game_framework.input_check(VK_RIGHT);
 	int check_up = game_framework.input_check(VK_UP);
 	int check_down = game_framework.input_check(VK_DOWN);
 
-	bool check_jump = game_framework.input_check(VK_SPACE);
-	bool check_smash = game_framework.input_check(VK_CHAR_Z);
-	bool check_rolling = game_framework.input_check(VK_CHAR_X);
-	bool check_blink = game_framework.input_check(VK_CHAR_C);
+	bool check_jump = game_framework.input_check_pressed(VK_SPACE);
+	bool check_smash = game_framework.input_check_pressed(VK_CHAR_Z);
+	bool check_rolling = game_framework.input_check_pressed(VK_CHAR_X);
+	bool check_blink = game_framework.input_check_pressed(VK_CHAR_C);
 
 	int check_hor = (check_right - check_left);
-
 	if (check_hor != 0 && can_move()) {
 		walk(check_hor, frame_advance);
 		look_at((LOOKDIR)check_hor);
-	} else if (!is_acting()) {
+	} else {
 		hspeed *= 0.2;
 	}
 

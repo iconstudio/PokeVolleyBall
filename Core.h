@@ -43,9 +43,7 @@ public:
 // 추상 장면 컴포넌트
 class GameScene : public GameBehavior {
 public:
-	using parent = GameBehavior;
-
-	GameScene() : parent(), done(false), instances{} {}
+	GameScene() : GameBehavior(), done(false), instances{} {}
 
 	virtual ~GameScene() {
 		instances.clear();

@@ -22,7 +22,16 @@ void GameFramework::input_register(const WPARAM virtual_button) {
 bool GameFramework::input_check(const WPARAM virtual_button) {
 	auto checker = key_checkers.find(virtual_button);
 	if (checker != key_checkers.end()) {
-		return checker->second->pressing;
+		return checker->second->is_pressing();
+	}
+
+	return false;
+}
+
+bool GameFramework::input_check_pressed(const WPARAM virtual_button) {
+	auto checker = key_checkers.find(virtual_button);
+	if (checker != key_checkers.end()) {
+		return checker->second->is_pressed();
 	}
 
 	return false;
@@ -51,10 +60,6 @@ bool GameFramework::update() {
 	on_update_later(delta_time);
 
 	return true;
-}
-
-void GameFramework::quit() {
-	state_clear();
 }
 
 void GameFramework::delta_start() {
@@ -148,7 +153,7 @@ void GameFramework::on_update_later(const double frame_advance) {
 
 void GameFramework::on_mousedown(const WPARAM button, const LPARAM cursor) {
 	auto vk_status = key_checkers[button];
-	vk_status->pressing = true;
+	vk_status->on_press();
 
 	mouse_x = LOWORD(cursor);
 	mouse_y = HIWORD(cursor);
@@ -156,7 +161,7 @@ void GameFramework::on_mousedown(const WPARAM button, const LPARAM cursor) {
 
 void GameFramework::on_mouseup(const WPARAM button, const LPARAM cursor) {
 	auto vk_status = key_checkers[button];
-	vk_status->pressing = false;
+	vk_status->on_release();
 
 	mouse_x = LOWORD(cursor);
 	mouse_y = HIWORD(cursor);
@@ -165,14 +170,14 @@ void GameFramework::on_mouseup(const WPARAM button, const LPARAM cursor) {
 void GameFramework::on_keydown(const WPARAM key) {
 	auto vk_status = key_checkers.find(key);
 	if (vk_status != key_checkers.end()) {
-		vk_status->second->pressing = true;
+		vk_status->second->on_press();
 	}
 }
 
 void GameFramework::on_keyup(const WPARAM key) {
 	auto vk_status = key_checkers.find(key);
 	if (vk_status != key_checkers.end()) {
-		vk_status->second->pressing = false;
+		vk_status->second->on_release();
 	}
 }
 
