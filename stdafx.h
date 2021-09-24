@@ -48,19 +48,4 @@
 #include <cmath>
 #include <chrono>
 
-using std::vector;
-using std::list;
-using std::stack;
-using std::set;
-using std::multimap;
-using std::map;
-using std::priority_queue;
-using std::deque;
-using std::string;
-using std::shared_ptr;
-using std::unique_ptr;
-using std::weak_ptr;
-using std::make_shared;
-using std::make_unique;
-using std::cout;
-using std::endl;
+using namespace std;
