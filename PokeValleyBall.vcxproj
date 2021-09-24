@@ -187,6 +187,7 @@
     <Image Include="PokeValleyBall.ico" />
     <Image Include="res\ball.png" />
     <Image Include="res\kpu2x.png" />
+    <Image Include="res\title.png" />
     <Image Include="small.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
