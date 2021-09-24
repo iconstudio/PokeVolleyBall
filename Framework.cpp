@@ -4,7 +4,9 @@
 
 
 GameFramework::GameFramework()
-	: mouse_x(0), mouse_y(0), delta_time(0.0), state_id(nullptr), painter{}, elapsed(0) {}
+	: mouse_x(0), mouse_y(0), delta_time(0.0), state_id(nullptr), painter{}, elapsed(0) {
+	state_clear();
+}
 
 GameFramework::~GameFramework() {
 	for (auto& sprite : sprites)
@@ -27,8 +29,6 @@ bool GameFramework::input_check(const WPARAM virtual_button) {
 }
 
 void GameFramework::init() {
-	state_clear();
-
 	input_register(VB_LEFT);
 	input_register(VB_MIDDLE);
 	input_register(VB_RIGHT);

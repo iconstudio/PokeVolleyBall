@@ -28,8 +28,8 @@ public:
 	size_t make_sprite(const LPCTSTR path, const UINT number, const int xoff, const int yoff);
 	shared_ptr<GameSprite> find_sprite(const size_t index);
 
-	void on_create();
-	void on_destroy();
+	void on_create(); // 상태 시작
+	void on_destroy(); // 상태 끝
 	void on_update(const double frame_advance);
 	void on_update_later(const double frame_advance);
 	void on_mousedown(const WPARAM button, const LPARAM cursor);
@@ -39,11 +39,11 @@ public:
 	void on_render(HWND window);
 
 	template<class GScene>
-	GScene* state_push() {
+	size_t state_push() {
 		auto room = new GScene();
-		states.push_back(room);
+		states.push_back(new GScene());
 
-		return room;
+		return states.size() - 1;
 	}
 
 	bool state_is_done() const;
@@ -71,19 +71,14 @@ private:
 
 	clock_type clock_previos, clock_now;
 	LONGLONG elapsed;
-	double delta_time; // 실제 시간
+	double delta_time;
 
-	PAINTSTRUCT painter; // 렌더링 정보
+	PAINTSTRUCT painter;
 
-	// 게임 장면 모음
-	deque<GameScene*> states;
-
+	deque<GameScene*> states; // 게임 장면 모음
 	vector<shared_ptr<GameSprite>> sprites;
-
 	map<WPARAM, shared_ptr<GameInput>> key_checkers;
 };
-
-using garage_iterator = multimap<unsigned long, GameBehavior*>::iterator;
 
 // 마우스 버튼
 const WPARAM VB_LEFT = 0, VB_MIDDLE = 1, VB_RIGHT = 2;
