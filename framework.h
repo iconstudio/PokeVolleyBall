@@ -51,13 +51,15 @@ public:
 	INT state_handle = 0; // 현재 상태의 위치 번호
 
 	LONG mouse_x, mouse_y; // 마우스 좌표
+
+	HDC surface_app;
 private:
 	class GameInput {
 	public:
-		double time = -1.0;
+		int time = -1;
 
-		void on_press() { time += 1.0; }
-		void on_release() { time = -1.0; }
+		void on_press() { time++; }
+		void on_release() { time = -1; }
 		bool is_pressing() const { return (0 <= time); }
 		bool is_pressed() const { return (0 == time); }
 	};

@@ -15,12 +15,10 @@
 typedef LRESULT(CALLBACK* WindowProcedure)(HWND, UINT, WPARAM, LPARAM);
 
 #define sign(_x) ((_x > 0) ? 1 : ((_x == 0) ? 0 : -1))
-#define var auto
 
 #define RESOLUTION_W 960 // 창 너비
 #define RESOLUTION_H 540 // 창 높이
 
-class GameInput;
 class GameFramework;
 class GameSprite;
 
@@ -28,10 +26,7 @@ class GameBehavior;
 class GameScene;
 class sceneTitle;
 class sceneMainMenu;
-class sceneGameReady;
 class sceneGame;
-class sceneGamePaused;
-class sceneGameComplete;
 class sceneScoring;
 class sceneSetting;
 
@@ -57,12 +52,15 @@ namespace Render {
 	static XFORM transform_identity{ 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f };
 }
 
+inline double point_distance(double x1, double y1, double x2, double y2) {
+	return sqrt(pow(x2 - x1, 2) + pow(y2 - y1, 2));
+}
 
-inline constexpr auto radtodeg(double value) {
+inline double radtodeg(double value) {
 	return value / M_PI * 180;
 }
 
-inline constexpr auto degtorad(double value) {
+inline double degtorad(double value) {
 	return value * M_PI / 180;
 }
 
@@ -77,12 +75,13 @@ inline double lengthdir_y(double length, double direction) {
 
 constexpr double pixel_to_meter = 0.03125; // 32px == 1m
 constexpr double meter_to_pixel = 32.; // 1m == 32px, 1km == 32000px
-constexpr double sec_to_hour = 3600.;
+constexpr double hour_to_seconds = 3600.;
 
-constexpr double phy_velocity = ((1000.0 / sec_to_hour) * meter_to_pixel);
+//constexpr double kph_to_pps = hour_to_seconds / (1000.0 * meter_to_pixel);
+constexpr double kph_to_pps = (1000.0 * meter_to_pixel / hour_to_seconds);
 
 constexpr double km_per_hr(const double velocity) {
-	return velocity * phy_velocity;
+	return velocity * kph_to_pps;
 }
 
 constexpr COLORREF COLOR_BLACK = RGB(0, 0, 0);

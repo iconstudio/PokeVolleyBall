@@ -115,9 +115,17 @@ void GameFramework::state_jump(const INT index) {
 	auto target = states.at(index);
 
 	if (target && target != state_id) {
+		if (state_id) {
+			if (!state_id->persistent) {
+				state_id->reset();
+				state_id->on_destroy();
+			}
+		}
+
 		target->done = false;
 		state_id = target;
 		state_handle = index;
+		state_id->on_create();
 	}
 }
 
@@ -182,7 +190,7 @@ void GameFramework::on_keyup(const WPARAM key) {
 }
 
 void GameFramework::on_render(HWND hwnd) {
-	HDC surface_app = BeginPaint(hwnd, &painter); // 앱 버퍼
+	surface_app = BeginPaint(hwnd, &painter); // 앱 버퍼
 	HDC surface_double = CreateCompatibleDC(surface_app);
 
 	// 메인 DC 그리기 부분
@@ -217,7 +225,7 @@ void GameFramework::on_render(HWND hwnd) {
 
 	DeleteDC(surface_back);
 	DeleteDC(surface_double);
-	ReleaseDC(hwnd, surface_app);
+	//ReleaseDC(hwnd, surface_app);
 	EndPaint(hwnd, &painter);
 }
 
