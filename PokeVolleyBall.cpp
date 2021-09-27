@@ -170,7 +170,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
 			game_framework.on_mouseup(VB_MIDDLE, lParam);
 		}
 		break;
-
+		
+		/*
 		// 키보드 누름
 		case WM_KEYDOWN:
 		{
@@ -189,6 +190,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
 			game_framework.on_keyup(wParam);
 		}
 		break;
+		*/
 
 		// 렌더링
 		case WM_PAINT:
@@ -402,12 +404,18 @@ void oPlayerPoke::on_update(double frame_advance) {
 		} else if (ask_smash) { // 스매시
 			int dir = 0;
 
-			bool smash_check_up = (y < ball->y);
-
-			if (smash_check_up) {
-
+			if (check_down) {
+				ball->hspeed = BALL_SMASH_SPIKE_XVELOCITY;
+				ball->vspeed = BALL_SMASH_SPIKE_XVELOCITY;
+			} else if (check_up) { // 위로 치기
+				ball->hspeed = BALL_SMASH_UP_XVELOCITY;
+				ball->vspeed = BALL_SMASH_UP_YVELOCITY;
+			} else if (check_left || check_right) {
+				ball->hspeed = BALL_SMASH_HAIRPIN_XVELOCITY * (int)dir;
+				ball->vspeed = BALL_SMASH_HAIRPIN_YVELOCITY;
 			} else {
-
+				ball->hspeed = BALL_SMASH_SPIKE_XVELOCITY;
+				ball->vspeed = BALL_SMASH_SPIKE_XVELOCITY;
 			}
 		} else if (is_jumping() && vspeed < -BALL_HEADING_YVELOCITY) { // 세게 쳐올리기
 			double rocketvel = -vspeed * 0.9;
@@ -664,6 +672,7 @@ void oPikachu::blink() {
 	blink_time = 0;
 	blink_recover_time = 0;
 	gravity = 0;
+	image_alpha = 0.4;
 }
 
 void oPikachu::rolling_recover() {
@@ -679,6 +688,7 @@ void oPikachu::blink_recover() {
 	gravity = GRAVITY;
 	wake_time = PIKA_BLINK_STOP_DURATION;
 	blink_recover_time = PIKA_BLINK_RECOVER_DURATION;
+	image_alpha = 1.0;
 }
 
 bool oPikachu::is_acting() const {
@@ -710,7 +720,7 @@ void oPikachu::look_at(LOOKDIR direction) {
 GameInstance::GameInstance(GameScene* nclan, double nx, double ny)
 	: GameBehavior(), room(nclan), sprite_index(nullptr), box{ 0, 0, 0, 0 }
 	, x(nx), y(ny), image_index(0.0), image_speed(0.0)
-	, image_xscale(1.0), image_yscale(1.0), image_angle(0.0)
+	, image_xscale(1.0), image_yscale(1.0), image_angle(0.0), image_alpha(1.0)
 	, hspeed(0.0), vspeed(0.0), gravity(GRAVITY)
 	, x_min(PLAYER_X_MIN), x_max(ENEMY_X_MAX) {}
 
@@ -853,7 +863,7 @@ void GameInstance::on_update_later(double frame_advance) {
 
 void GameInstance::on_render(HDC canvas) {
 	if (sprite_index) {
-		sprite_index->draw(canvas, x, y, image_index, image_angle, image_xscale, image_yscale);
+		sprite_index->draw(canvas, x, y, image_index, image_angle, image_xscale, image_yscale, image_alpha);
 	}
 }
 

@@ -51,6 +51,19 @@ void GameFramework::build() {
 }
 
 bool GameFramework::update() {
+	short check;
+	for (auto& key_pair : key_checkers) {
+		check = GetAsyncKeyState(key_pair.first);
+
+		auto state = key_pair.second;
+
+		if (HIBYTE(check) == 0) { // released
+			state->on_release();
+		} else if (check & 0x8000) {
+			state->on_press();
+		}
+	}
+
 	if (state_is_done()) {
 		return false;
 	}

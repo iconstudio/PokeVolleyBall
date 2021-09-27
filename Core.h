@@ -41,7 +41,7 @@ public:
 	shared_ptr<GameSprite> sprite_index; // 스프라이트
 	RECT box; // 충돌체
 	double image_index, image_speed; // 애니메이션
-	double image_xscale, image_yscale, image_angle;
+	double image_xscale, image_yscale, image_angle, image_alpha;
 	double x, y; // 좌표
 	double x_min, x_max;
 	double hspeed, vspeed, gravity;
