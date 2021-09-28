@@ -47,8 +47,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 		return FALSE;
 	}
 
-	// 단축키의 목록을 불러옵니다.
-	HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_POKEVALLEYBALL));
 	MSG msg{};
 
 	// 게임 초기화
@@ -85,10 +83,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 					break;
 				}
 
-				if (!::TranslateAccelerator(msg.hwnd, hAccelTable, &msg)) {
-					::TranslateMessage(&msg);
-					::DispatchMessage(&msg);
-				}
+				::TranslateMessage(&msg);
+				::DispatchMessage(&msg);
 			} else {
 				
 			}
@@ -324,7 +320,6 @@ void sceneGame::on_create() {
 	turn = TURN::player;
 	player->ball = ball;
 	enemy->ball = ball;
-	//persistent = true;
 
 	GameScene::on_create();
 }
@@ -396,14 +391,14 @@ void oPlayerPoke::on_update(double frame_advance) {
 	auto collide_with_ball = collide_with(ball);
 	if (collide_with_ball) {
 		if (is_rolling()) {
+			ball->hspeed = BALL_HEADING_APGUREUGI_XVELOCITY * (int)dir;
 			if (-BALL_HEADING_APGUREUGI_YVELOCITY < vspeed)
 				ball->jump(BALL_HEADING_APGUREUGI_YVELOCITY);
 		} else if (is_blinking()) {
+			ball->hspeed = BALL_HEADING_BLINK_XVELOCITY * (int)dir;
 			if (-BALL_HEADING_BLINK_YVELOCITY < vspeed)
 				ball->jump(BALL_HEADING_BLINK_YVELOCITY);
 		} else if (ask_smash) { // 스매시
-			int dir = 0;
-
 			if (check_down) {
 				ball->hspeed = BALL_SMASH_SPIKE_XVELOCITY;
 				ball->vspeed = BALL_SMASH_SPIKE_XVELOCITY;
@@ -457,25 +452,21 @@ void oVolleyBall::on_update(double frame_advance) {
 	if (FENCE_Y <= checky) { // 네트에 팅겼을 땐 살살 팅긴다.
 		auto xspeed = hspeed * frame_advance;
 		if (xspeed != 0.0) {
-			if (RESOLUTION_W * 0.5 <= x && xspeed < 0) { // 오른쪽 부분에서 팅김
+			if (x <= RESOLUTION_W * 0.5 && xspeed < 0) { // 오른쪽 부분에서 팅김
 				auto checkx = x + box.left + xspeed - 1;
 
 				if (checkx <= FENCE_X_RIGHT) {
-					hspeed *= -0.7;
-					vspeed *= -1;
-					
-					// 정규화
-					double speed = point_distance(0, 0, hspeed, vspeed);
-					double nx = hspeed / speed;
-					double ny = vspeed / speed;
-
+					x = FENCE_X_RIGHT - box.left + 1;
+					hspeed = abs(hspeed) * 0.7;
+					vspeed = abs(vspeed);
 				}
 			} else if (RESOLUTION_W * 0.5 <= x && 0 < xspeed) { // 왼쪽 부분에서 팅김
 				auto checkx = x + box.right + xspeed + 1;
 
 				if (FENCE_X_LEFT < checkx) {
-					hspeed *= -0.7;
-					vspeed *= -1;
+					x = FENCE_X_LEFT - box.right - 1;
+					hspeed *= -abs(hspeed) * 0.7;
+					vspeed *= abs(vspeed);
 				}
 			}
 		}

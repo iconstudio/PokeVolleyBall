@@ -61,10 +61,11 @@ constexpr double PIKA_STAMINA_MAX = 15.0; // 최대 체력 (시간)
 constexpr double STAMINA_SPEND_APGUREUGI = 3.5; // 앞구르기의 소모 체력 (시간)
 constexpr double STAMINA_SPEND_BLINK = 5.5; // 전광석화의 소모 체력 (시간)
 
-
 constexpr double BALL_HEADING_YVELOCITY = km_per_hr(72); // 일반 헤딩
 constexpr double BALL_HEADING_JUMP_YVELOCITY = km_per_hr(120); // 점프 헤딩
+constexpr double BALL_HEADING_APGUREUGI_XVELOCITY = km_per_hr(40); // 앞구르기할 때 헤딩
 constexpr double BALL_HEADING_APGUREUGI_YVELOCITY = km_per_hr(80); // 앞구르기할 때 헤딩
+constexpr double BALL_HEADING_BLINK_XVELOCITY = PIKA_BLINK_VELOCITY * 0.5; // 전광석화할 때 헤딩
 constexpr double BALL_HEADING_BLINK_YVELOCITY = km_per_hr(110); // 전광석화할 때 헤딩
 constexpr double BALL_SMASH_HAIRPIN_XVELOCITY = km_per_hr(80); // 수평으로 날리는 헤어핀
 constexpr double BALL_SMASH_HAIRPIN_YVELOCITY = km_per_hr(10); // 수평으로 날리는 헤어핀
@@ -203,6 +204,7 @@ public:
 	void look_at(LOOKDIR direction);
 
 	GameInstance* ball;
+	LOOKDIR dir;
 
 private:
 	bool jumping, sliding, blinking, carrying; // 상태 플래그
@@ -211,7 +213,6 @@ private:
 
 	double wake_time;
 	double blink_time, blink_recover_time;
-	LOOKDIR dir;
 };
 
 class oPlayerPoke : public oPikachu {

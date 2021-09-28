@@ -62,6 +62,9 @@
     <ClCompile Include="Sprite.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="Main.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PokeValleyBall.rc">

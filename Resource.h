@@ -6,7 +6,6 @@
 #define IDD_POKEVALLEYBALL_DIALOG       102
 #define IDS_APP_TITLE                   103
 #define IDD_ABOUTBOX                    103
-#define IDM_ABOUT                       104
 #define IDI_POKEVALLEYBALL              107
 #define IDI_SMALL                       108
 #define IDC_POKEVALLEYBALL              109
